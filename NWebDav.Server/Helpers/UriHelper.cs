@@ -26,7 +26,7 @@ namespace NWebDav.Server.Helpers
             return uri.LocalPath + Uri.UnescapeDataString(uri.Fragment);
         }
 
-        public static Uri RemoveRootDirectory(Uri uri, string rootDirectory)
+        internal static Uri RemoveRootDirectory(Uri uri, string rootDirectory)
         {
             return new($"{uri.Scheme}://{uri.Host}:{uri.Port}{new System.Text.RegularExpressions.Regex($"^\\/{rootDirectory}").Replace(uri.LocalPath, string.Empty)}");
         }
