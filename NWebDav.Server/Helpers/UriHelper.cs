@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 
 namespace NWebDav.Server.Helpers
 {
@@ -26,9 +27,19 @@ namespace NWebDav.Server.Helpers
             return uri.LocalPath + Uri.UnescapeDataString(uri.Fragment);
         }
 
+        public static Uri EscapePercentSigns(Uri uri, bool escapePercent = false)
+        {
+            return new Uri(EscapePercentSigns(uri.ToString(), escapePercent));
+        }
+        
+        public static string EscapePercentSigns(string path, bool escapePercent = false)
+        {
+            return escapePercent ? path.Replace("%", "%25") : Regex.Replace(path, "%(?!25)", "%25");
+        }
+
         internal static Uri RemoveRootDirectory(Uri uri, string rootDirectory)
         {
-            return new($"{uri.Scheme}://{uri.Host}:{uri.Port}{new System.Text.RegularExpressions.Regex($"^\\/{rootDirectory}").Replace(uri.LocalPath, string.Empty)}");
+            return new($"{uri.Scheme}://{uri.Host}:{uri.Port}{Regex.Replace(EscapePercentSigns(uri, true).LocalPath, $"^\\/{rootDirectory}", string.Empty)}");
         }
     }
 }

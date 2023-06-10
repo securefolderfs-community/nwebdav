@@ -9,7 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -34,7 +33,7 @@ namespace NWebDav.Server.Handlers
 
             public PropertyEntry(Uri uri, IStoreItem entry)
             {
-                Uri = new Uri(new Regex("%(?!25)").Replace(uri.ToString(), "%25"));
+                Uri = uri;
                 Entry = entry;
             }
         }
@@ -55,6 +54,7 @@ namespace NWebDav.Server.Handlers
         public async Task HandleRequestAsync(IHttpContext context, IStore store, IStorageService storageService, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain request and response
+            
             var request = context.Request;
             var response = context.Response;
 
@@ -264,7 +264,7 @@ namespace NWebDav.Server.Handlers
         private async Task AddEntriesAsync(IStoreCollection collection, int depth, IHttpContext context, Uri uri, IList<PropertyEntry> entries)
         {
             // Add the collection to the list
-            entries.Add(new PropertyEntry(uri, collection));
+            entries.Add(new PropertyEntry(UriHelper.EscapePercentSigns(uri), collection));
 
             // If we have enough depth, then add the children
             if (depth > 0)
@@ -272,7 +272,7 @@ namespace NWebDav.Server.Handlers
                 // Add all child collections
                 foreach (var childEntry in await collection.GetItemsAsync(context).ConfigureAwait(false))
                 {
-                    var subUri = UriHelper.Combine(uri, childEntry.Name);
+                    var subUri = UriHelper.Combine(uri, UriHelper.EscapePercentSigns(childEntry.Name, true));
                     if (childEntry is IStoreCollection subCollection)
                         await AddEntriesAsync(subCollection, depth - 1, context, subUri, entries).ConfigureAwait(false);
                     else

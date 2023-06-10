@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Security;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using NWebDav.Server.Helpers;
 using NWebDav.Server.Http;
@@ -53,7 +52,7 @@ namespace NWebDav.Server.Stores
         protected virtual string GetPathFromUri(Uri uri)
         {
             // Determine the path
-            var requestedPath = UriHelper.GetDecodedPath(new(Regex.Replace(uri.ToString(), "%(?!25)", "%25")))
+            var requestedPath = UriHelper.GetDecodedPath(UriHelper.EscapePercentSigns(uri))
                 .Substring(1).Replace('/', Path.DirectorySeparatorChar);
 
             // Determine the full path
