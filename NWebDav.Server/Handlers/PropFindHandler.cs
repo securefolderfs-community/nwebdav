@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -33,7 +34,7 @@ namespace NWebDav.Server.Handlers
 
             public PropertyEntry(Uri uri, IStoreItem entry)
             {
-                Uri = uri;
+                Uri = new Uri(new Regex("%(?!25)").Replace(uri.ToString(), "%25"));
                 Entry = entry;
             }
         }
