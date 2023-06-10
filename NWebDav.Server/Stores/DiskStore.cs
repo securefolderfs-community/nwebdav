@@ -52,11 +52,9 @@ namespace NWebDav.Server.Stores
 
         protected virtual string GetPathFromUri(Uri uri)
         {
-            if (Regex.IsMatch(uri.ToString(), "%(?!25)"))
-                uri = new(uri.ToString().Replace("%", "%25"));
-            
             // Determine the path
-            var requestedPath = UriHelper.GetDecodedPath(uri).Substring(1).Replace('/', Path.DirectorySeparatorChar);
+            var requestedPath = UriHelper.GetDecodedPath(new(Regex.Replace(uri.ToString(), "%(?!25)", "%25")))
+                .Substring(1).Replace('/', Path.DirectorySeparatorChar);
 
             // Determine the full path
             var fullPath = Path.GetFullPath(Path.Combine(BaseDirectory, requestedPath));
