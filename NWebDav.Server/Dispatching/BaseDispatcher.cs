@@ -120,8 +120,15 @@ namespace NWebDav.Server.Dispatching
             }
             finally
             {
-                // Always close the context
-                await context.DisposeAsync().ConfigureAwait(false);
+                try
+                {
+                    // Always close the context
+                    await context.DisposeAsync().ConfigureAwait(false);
+                }
+                catch (Exception)
+                {
+                    // Closing the context can sometimes fail, for example when MiniRedir cancels a file upload due to it being too large.
+                }
             }
         }
 
