@@ -127,7 +127,8 @@ namespace NWebDav.Server.Dispatching
                 }
                 catch (Exception)
                 {
-                    // Closing the context can sometimes fail, for example when MiniRedir cancels a file upload due to it being too large.
+                    // Closing the context can sometimes fail, for example when Microsoft-WebDAV-MiniRedir cancels
+                    // a PUT request due to the file size being too large.
                 }
             }
         }
