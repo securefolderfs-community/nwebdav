@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using NWebDav.Server.Http;
 using SecureFolderFS.Shared.Extensions;
-using SecureFolderFS.Shared.Utilities;
+using SecureFolderFS.Shared.ComponentModel;
 using System;
 using System.Globalization;
 using System.IO;
