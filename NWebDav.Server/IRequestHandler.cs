@@ -38,13 +38,13 @@ namespace NWebDav.Server
         /// </summary>
         /// <param name="context">The HTTP context of the request.</param>
         /// <param name="store">Store that is used to access the collections and items.</param>
-        /// <param name="storageRoot">The <see cref="IStorageService"/> instance that will be used to access the file system.</param>
+        /// <param name="storageRoot">The <see cref="IFolder"/> instance that will be used to access the file system.</param>
         /// <param name="logger">The logger to used to trace warnings and debug information.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> that cancels this action.</param>
         /// <returns>
         /// A <see cref="Task"/> that represents the asynchronous operation. If the request was not handled - i.e. <see cref="NotImplementedException"/> was thrown,
         /// then the status code <see cref="HttpStatusCode.NotImplemented"/> is returned to the requester.
         /// </returns>
-        Task HandleRequestAsync(IHttpContext context, IStore store, IGetItemRecursive storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default); 
+        Task HandleRequestAsync(IHttpContext context, IStore store, IFolder storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default); 
     }
 }

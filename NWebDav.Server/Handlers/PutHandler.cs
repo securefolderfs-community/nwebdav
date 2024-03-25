@@ -28,7 +28,7 @@ namespace NWebDav.Server.Handlers
         /// Handle a PUT request.
         /// </summary>
         /// <inheritdoc/>
-        public async Task HandleRequestAsync(IHttpContext context, IStore store, IGetItemRecursive storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public async Task HandleRequestAsync(IHttpContext context, IStore store, IFolder storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             if (context.Request.Url is null)
             {

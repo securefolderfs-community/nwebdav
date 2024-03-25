@@ -14,7 +14,7 @@ namespace NWebDav.Server.Dispatching
         private readonly IStore _store;
         private readonly IGetItemRecursive _storageRoot;
 
-        public WebDavDispatcher(IStore store, IGetItemRecursive storageRoot, IRequestHandlerProvider requestHandlerFactory, ILogger? logger)
+        public WebDavDispatcher(IStore store, IFolder storageRoot, IRequestHandlerProvider requestHandlerFactory, ILogger? logger)
             : base(requestHandlerFactory, logger)
         {
             _store = store;

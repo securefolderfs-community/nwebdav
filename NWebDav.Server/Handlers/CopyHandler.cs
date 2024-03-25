@@ -26,7 +26,7 @@ namespace NWebDav.Server.Handlers
         /// Handle a COPY request.
         /// </summary>
         /// <inheritdoc/>
-        public async Task HandleRequestAsync(IHttpContext context, IStore store, IGetItemRecursive storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public async Task HandleRequestAsync(IHttpContext context, IStore store, IFolder storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain request and response
             var request = context.Request;

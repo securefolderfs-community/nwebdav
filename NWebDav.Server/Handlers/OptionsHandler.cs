@@ -22,7 +22,7 @@ namespace NWebDav.Server.Handlers
         /// Handle a OPTIONS request.
         /// </summary>
         /// <inheritdoc/>
-        public Task HandleRequestAsync(IHttpContext context, IStore store, IGetItemRecursive storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public Task HandleRequestAsync(IHttpContext context, IStore store, IFolder storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain response
             var response = context.Response;
