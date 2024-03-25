@@ -12,7 +12,7 @@ namespace NWebDav.Server.Dispatching
     public sealed class WebDavDispatcher : BaseDispatcher
     {
         private readonly IStore _store;
-        private readonly IGetItemRecursive _storageRoot;
+        private readonly IFolder _storageRoot;
 
         public WebDavDispatcher(IStore store, IFolder storageRoot, IRequestHandlerProvider requestHandlerFactory, ILogger? logger)
             : base(requestHandlerFactory, logger)
