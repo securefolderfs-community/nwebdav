@@ -48,7 +48,7 @@ namespace NWebDav.Server.Props
         public Func<IHttpContext, TEntry, object, Task<HttpStatusCode>> SetterAsync { get; set; }
 
         /// <summary>
-        /// Gets or sets the flag whether or not the property is expensive.
+        /// Gets or sets the flag whether the property is expensive.
         /// </summary>
         /// <returns>
         /// <see langword="true"/> if the property is expensive to calculate or

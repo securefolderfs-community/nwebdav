@@ -1,4 +1,5 @@
-﻿using SecureFolderFS.Sdk.Storage.StorageProperties;
+﻿using OwlCore.Storage;
+using SecureFolderFS.Storage.StorageProperties;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;

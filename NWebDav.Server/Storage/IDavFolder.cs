@@ -1,15 +1,13 @@
 ﻿using NWebDav.Server.Enums;
-using SecureFolderFS.Sdk.Storage.DirectStorage;
-using SecureFolderFS.Sdk.Storage.ExtendableStorage;
-using SecureFolderFS.Sdk.Storage.LocatableStorage;
-using SecureFolderFS.Sdk.Storage.NestedStorage;
+using OwlCore.Storage;
 
 namespace NWebDav.Server.Storage
 {
     /// <summary>
     /// Represents a WebDAV folder.
     /// </summary>
-    public interface IDavFolder : IDavStorable, ILocatableFolder, IFolderExtended, INestedFolder, IDirectCopy, IDirectMove
+    // TODO: Implement Copy/Move
+    public interface IDavFolder : IDavStorable, IChildFolder, IModifiableFolder, IGetItem, IGetItemRecursive, IGetFirstByName
     {
         /// <summary>
         /// Gets the depth mode for enumerating directory contents.

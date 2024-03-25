@@ -1,4 +1,5 @@
-﻿using SecureFolderFS.Sdk.Storage.StorageProperties;
+﻿using OwlCore.Storage;
+using SecureFolderFS.Storage.StorageProperties;
 
 namespace NWebDav.Server.Storage.StorageProperties
 {

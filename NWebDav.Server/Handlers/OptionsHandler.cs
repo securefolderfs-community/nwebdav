@@ -2,7 +2,7 @@
 using NWebDav.Server.Helpers;
 using NWebDav.Server.Http;
 using NWebDav.Server.Stores;
-using SecureFolderFS.Sdk.Storage;
+using OwlCore.Storage;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,7 +22,7 @@ namespace NWebDav.Server.Handlers
         /// Handle a OPTIONS request.
         /// </summary>
         /// <inheritdoc/>
-        public Task HandleRequestAsync(IHttpContext context, IStore store, IStorageService storageService, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public Task HandleRequestAsync(IHttpContext context, IStore store, IGetItemRecursive storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain response
             var response = context.Response;

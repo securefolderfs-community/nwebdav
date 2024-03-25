@@ -9,7 +9,7 @@
         /// <summary>
         /// Infinite depth is allowed (this is according spec).
         /// </summary>
-        Allowed,
+        Unbounded,
 
         /// <summary>
         /// Infinite depth is not allowed (this results in HTTP 403 Forbidden).

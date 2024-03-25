@@ -16,7 +16,7 @@ namespace NWebDav.Server.Props
         public XName Name { get; }
 
         /// <summary>
-        /// Flag indicating whether or not it's expensive to determine the
+        /// Flag indicating whether it's expensive to determine the
         /// property's value.
         /// </summary>
         /// <remarks>
@@ -34,7 +34,7 @@ namespace NWebDav.Server.Props
         /// Name of the property.
         /// </param>
         /// <param name="isExpensive">
-        /// Flag indicating whether or not it's expensive to determine the
+        /// Flag indicating whether it's expensive to determine the
         /// property's value.
         /// </param>
         public PropertyInfo(XName name, bool isExpensive)

@@ -3,7 +3,7 @@ using NWebDav.Server.Helpers;
 using NWebDav.Server.Http;
 using NWebDav.Server.Props;
 using NWebDav.Server.Stores;
-using SecureFolderFS.Sdk.Storage;
+using OwlCore.Storage;
 using System;
 using System.Globalization;
 using System.IO;
@@ -29,7 +29,7 @@ namespace NWebDav.Server.Handlers
         /// Handle a GET or HEAD request.
         /// </summary>
         /// <inheritdoc/>
-        public async Task HandleRequestAsync(IHttpContext context, IStore store, IStorageService storageService, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public async Task HandleRequestAsync(IHttpContext context, IStore store, IGetItemRecursive storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain request and response
             var request = context.Request;

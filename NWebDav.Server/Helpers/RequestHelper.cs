@@ -133,7 +133,7 @@ namespace NWebDav.Server.Helpers
         /// </summary>
         /// <param name="request">HTTP request.</param>
         /// <returns>
-        /// Flag indicating whether or not to overwrite the destination
+        /// Flag indicating whether to overwrite the destination
         /// if it already exists.
         /// </returns>
         /// <remarks>

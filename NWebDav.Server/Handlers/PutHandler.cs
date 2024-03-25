@@ -2,10 +2,10 @@
 using NWebDav.Server.Helpers;
 using NWebDav.Server.Http;
 using NWebDav.Server.Stores;
-using SecureFolderFS.Sdk.Storage;
-using SecureFolderFS.Sdk.Storage.Extensions;
-using SecureFolderFS.Sdk.Storage.ModifiableStorage;
+using OwlCore.Storage;
 using SecureFolderFS.Shared.Extensions;
+using SecureFolderFS.Storage.Extensions;
+using System;
 using System.IO;
 using System.Net;
 using System.Threading;
@@ -28,7 +28,7 @@ namespace NWebDav.Server.Handlers
         /// Handle a PUT request.
         /// </summary>
         /// <inheritdoc/>
-        public async Task HandleRequestAsync(IHttpContext context, IStore store, IStorageService storageService, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public async Task HandleRequestAsync(IHttpContext context, IStore store, IGetItemRecursive storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             if (context.Request.Url is null)
             {
@@ -40,19 +40,25 @@ namespace NWebDav.Server.Handlers
             var splitUri = RequestHelper.SplitUri(context.Request.Url);
 
             // Obtain collection
-            var folder = await storageService.TryGetFolderAsync(splitUri.CollectionUri.GetUriPath(), cancellationToken).ConfigureAwait(false);
-            if (folder is null)
+            IModifiableFolder folder;
+            try
+            {
+                if (await storageRoot.GetItemRecursiveAsync(splitUri.CollectionUri.GetUriPath(), cancellationToken)
+                        .ConfigureAwait(false) is not IModifiableFolder modifiableFolder)
+                {
+                    context.Response.SetStatus(HttpStatusCode.Forbidden);
+                    return;
+                }
+
+                folder = modifiableFolder;
+            }
+            catch (Exception)
             {
                 context.Response.SetStatus(HttpStatusCode.Conflict);
                 return;
             }
-            if (folder is not IModifiableFolder modifiableFolder)
-            {
-                context.Response.SetStatus(HttpStatusCode.Forbidden);
-                return;
-            }
 
-            var createdFileResult = await modifiableFolder.CreateFileWithResultAsync(splitUri.Name, true, cancellationToken).ConfigureAwait(false);
+            var createdFileResult = await folder.CreateFileWithResultAsync(splitUri.Name, true, cancellationToken).ConfigureAwait(false);
             if (createdFileResult.Successful)
             {
                 var fileStreamResult = await createdFileResult.Value!.OpenStreamWithResultAsync(FileAccess.ReadWrite, cancellationToken).ConfigureAwait(false);

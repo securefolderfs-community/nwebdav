@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using NWebDav.Server.Http;
 using NWebDav.Server.Stores;
-using SecureFolderFS.Sdk.Storage;
+using OwlCore.Storage;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,13 +12,13 @@ namespace NWebDav.Server.Dispatching
     public sealed class WebDavDispatcher : BaseDispatcher
     {
         private readonly IStore _store;
-        private readonly IStorageService _davStorageService;
+        private readonly IGetItemRecursive _storageRoot;
 
-        public WebDavDispatcher(IStore store, IStorageService davStorageService, IRequestHandlerProvider requestHandlerFactory, ILogger? logger)
+        public WebDavDispatcher(IStore store, IGetItemRecursive storageRoot, IRequestHandlerProvider requestHandlerFactory, ILogger? logger)
             : base(requestHandlerFactory, logger)
         {
             _store = store;
-            _davStorageService = davStorageService;
+            _storageRoot = storageRoot;
         }
 
         /// <inheritdoc/>
@@ -26,7 +26,7 @@ namespace NWebDav.Server.Dispatching
         {
             try
             {
-                await requestHandler.HandleRequestAsync(context, _store, _davStorageService, Logger, cancellationToken).ConfigureAwait(false);
+                await requestHandler.HandleRequestAsync(context, _store, _storageRoot, Logger, cancellationToken).ConfigureAwait(false);
                 return true;
             }
             catch (NotImplementedException)

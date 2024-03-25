@@ -21,11 +21,13 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+    <PackageReference Include="OwlCore.Storage" Version="0.10.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\SecureFolderFS.Sdk.Storage\SecureFolderFS.Sdk.Storage.csproj" />
+    <ProjectReference Include="..\..\..\src\SecureFolderFS.Sdk.Storage\SecureFolderFS.Storage.csproj" />
     <ProjectReference Include="..\..\..\src\SecureFolderFS.Shared\SecureFolderFS.Shared.csproj" />
+    <ProjectReference Include="..\..\..\src\SecureFolderFS.Storage\SecureFolderFS.Storage.csproj" />
   </ItemGroup>
 
 </Project>

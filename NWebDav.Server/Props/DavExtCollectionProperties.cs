@@ -111,11 +111,11 @@ namespace NWebDav.Server.Props
     }
 
     /// <summary>
-    /// Specifies whether or not a collection should appear as a folder.
+    /// Specifies whether a collection should appear as a folder.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This property identifies whether or not a collection should appear as
+    /// This property identifies whether a collection should appear as
     /// a folder. If true (or absent), the collection should be displayed as a
     /// folder. If false, the collection should NOT be displayed as a folder.
     /// For example, a structured document should have "isfolder" set to false.
@@ -145,11 +145,11 @@ namespace NWebDav.Server.Props
     }
 
     /// <summary>
-    /// Specifies whether or not a resource is hidden.
+    /// Specifies whether a resource is hidden.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This property identifies whether or not a resource is hidden. This can
+    /// This property identifies whether a resource is hidden. This can
     /// be considered a hint to the client UI: under normal conditions, for
     /// non-expert users, hidden files should not be exposed to users. The
     /// server may omit the hidden resource from some presentational listings,
@@ -241,7 +241,7 @@ namespace NWebDav.Server.Props
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This property identifies whether or not a folder contains sub-folders,
+    /// This property identifies whether a folder contains sub-folders,
     /// from the point of view of client display. Sub-folders are child
     /// collections for which "isfolder" is true.
     /// </para>
@@ -282,7 +282,7 @@ namespace NWebDav.Server.Props
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This property identifies whether or not a collection allows child
+    /// This property identifies whether a collection allows child
     /// collections to be created. True indicates that the collection does not
     /// allow child collections). While this data is redundant with that
     /// returned by the OPTIONS method, providing this information as a
@@ -366,7 +366,7 @@ namespace NWebDav.Server.Props
     }
 
     /// <summary>
-    /// Specifies whether or not the collection is reserved.
+    /// Specifies whether the collection is reserved.
     /// </summary>
     /// <remarks>
     /// <para>
