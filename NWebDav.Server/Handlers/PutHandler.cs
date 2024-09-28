@@ -3,6 +3,7 @@ using NWebDav.Server.Helpers;
 using NWebDav.Server.Http;
 using NWebDav.Server.Stores;
 using OwlCore.Storage;
+using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,8 +45,17 @@ namespace NWebDav.Server.Handlers
 
             // Obtain the item
             var result = await collection.CreateItemAsync(splitUri.Name, true, context).ConfigureAwait(false);
-            response.SetStatus(result.Result);
-            return;
+            var status = result.Result;
+            if (status == HttpStatusCode.Created || status == HttpStatusCode.NoContent)
+            {
+                // Upload the information to the item
+                var uploadStatus = await result.Item.UploadFromStreamAsync(context, request.InputStream ?? Stream.Null).ConfigureAwait(false);
+                if (uploadStatus != HttpStatusCode.OK)
+                    status = uploadStatus;
+            }
+
+            // Finished writing
+            response.SetStatus(status);
         }
     }
 }
