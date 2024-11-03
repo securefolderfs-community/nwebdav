@@ -15,21 +15,26 @@ public sealed class DiskStoreItem : IStoreItem
     private readonly DiskStoreBase _store;
     private readonly ILogger<DiskStoreItem> _logger;
 
+    /// <inheritdoc/>
+    public string Name { get; }
+
+    /// <inheritdoc/>
+    public string UniqueKey { get; }
+
     public DiskStoreItem(DiskStoreBase store, DiskStoreItemPropertyManager propertyManager, FileInfo fileInfo, ILogger<DiskStoreItem> logger)
     {
         _store = store;
+        _logger = logger;
+        Name = fileInfo.Name;
+        UniqueKey = fileInfo.FullName;
         FileInfo = fileInfo;
         PropertyManager = propertyManager;
-        _logger = logger;
     }
 
     public IPropertyManager PropertyManager { get; }
 
     public FileInfo FileInfo { get; }
     public bool IsWritable => _store.IsWritable;
-    public string Name => FileInfo.Name;
-    public string UniqueKey => FileInfo.FullName;
-    public string FullPath => FileInfo.FullName;
     public Task<Stream> GetReadableStreamAsync(CancellationToken cancellationToken) => Task.FromResult((Stream)FileInfo.OpenRead());
 
     public async Task<DavStatusCode> UploadFromStreamAsync(Stream inputStream, CancellationToken cancellationToken)
