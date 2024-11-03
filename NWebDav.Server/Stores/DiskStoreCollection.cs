@@ -41,7 +41,7 @@ public sealed class DiskStoreCollection : IStoreCollection
         cancellationToken.ThrowIfCancellationRequested();
             
         var fullPath = Path.Combine(FullPath, name);
-        return Task.FromResult(_store.CreateFromPath(fullPath));
+        return Task.FromResult(_store.CreateFromPath<IStoreItem>(fullPath));
     }
 
     // Not async, but this is the easiest way to return an IAsyncEnumerable

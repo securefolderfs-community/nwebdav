@@ -25,26 +25,30 @@ public abstract class DiskStoreBase : IStore
         _loggerFactory = loggerFactory;
     }
 
-    public virtual Task<IStoreItem?> GetItemAsync(Uri uri, CancellationToken cancellationToken)
+    public virtual async Task<IStoreItem?> GetItemAsync(Uri uri, CancellationToken cancellationToken)
     {
+        await Task.CompletedTask;
         cancellationToken.ThrowIfCancellationRequested();
-            
+
+        // Get path and item
         var path = GetPathFromUri(uri);
-        var item = CreateFromPath(path);
-        return Task.FromResult(item);
+        var item = CreateFromPath<IStoreItem>(path);
+
+        return item;
     }
 
-    public virtual Task<IStoreCollection?> GetCollectionAsync(Uri uri, CancellationToken cancellationToken)
+    public virtual async Task<IStoreCollection?> GetCollectionAsync(Uri uri, CancellationToken cancellationToken)
     {
+        await Task.CompletedTask;
         cancellationToken.ThrowIfCancellationRequested();
             
         // Determine the path from the uri
         var path = GetPathFromUri(uri);
         if (!Directory.Exists(path))
-            return Task.FromResult<IStoreCollection?>(null);
+            return null;
 
         // Return the item
-        return Task.FromResult<IStoreCollection?>(CreateCollection(new DirectoryInfo(path)));
+        return CreateFromPath<IStoreCollection>(path);
     }
 
     protected virtual string GetPathFromUri(Uri uri)
@@ -63,18 +67,27 @@ public abstract class DiskStoreBase : IStore
         return fullPath;
     }
 
-    public virtual IStoreItem? CreateFromPath(string path)
+    public virtual T? CreateFromPath<T>(string path)
+        where T : class, IStoreItem
     {
-        // Check if it's a directory
-        if (Directory.Exists(path))
-            return CreateCollection(new DirectoryInfo(path));
+        if (typeof(T).IsAssignableFrom(typeof(IStoreCollection)))
+        {
+            return (T?)(object)CreateCollection(new DirectoryInfo(path));
+        }
+        //else if (typeof(T).IsAssignableFrom(typeof(IStoreFile))) // TODO: Add a StoreFile
+        else
+        {
+            // Check if it's a directory
+            if (Directory.Exists(path))
+                return (T?)(object)CreateCollection(new DirectoryInfo(path));
 
-        // Check if it's a file
-        if (File.Exists(path))
-            return CreateItem(new FileInfo(path));
+            // Check if it's a file
+            if (File.Exists(path))
+                return (T?)(object)CreateItem(new FileInfo(path));
 
-        // The item doesn't exist
-        return null;
+            // The item doesn't exist
+            return null;
+        }
     }
 
     internal DiskStoreCollection CreateCollection(DirectoryInfo directoryInfo) =>
