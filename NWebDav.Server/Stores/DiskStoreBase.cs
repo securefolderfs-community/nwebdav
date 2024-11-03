@@ -14,6 +14,10 @@ public abstract class DiskStoreBase : IStore
     private readonly DiskStoreItemPropertyManager _diskStoreItemPropertyManager;
     private readonly ILoggerFactory _loggerFactory;
 
+    public abstract bool IsWritable { get; }
+
+    public abstract string BaseDirectory { get; }
+
     protected DiskStoreBase(DiskStoreCollectionPropertyManager diskStoreCollectionPropertyManager, DiskStoreItemPropertyManager diskStoreItemPropertyManager, ILoggerFactory loggerFactory)
     {
         _diskStoreCollectionPropertyManager = diskStoreCollectionPropertyManager;
@@ -21,10 +25,7 @@ public abstract class DiskStoreBase : IStore
         _loggerFactory = loggerFactory;
     }
 
-    public abstract bool IsWritable { get; }
-    public abstract string BaseDirectory { get; }
-
-    public Task<IStoreItem?> GetItemAsync(Uri uri, CancellationToken cancellationToken)
+    public virtual Task<IStoreItem?> GetItemAsync(Uri uri, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
             
@@ -33,7 +34,7 @@ public abstract class DiskStoreBase : IStore
         return Task.FromResult(item);
     }
 
-    public Task<IStoreCollection?> GetCollectionAsync(Uri uri, CancellationToken cancellationToken)
+    public virtual Task<IStoreCollection?> GetCollectionAsync(Uri uri, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
             
@@ -46,7 +47,7 @@ public abstract class DiskStoreBase : IStore
         return Task.FromResult<IStoreCollection?>(CreateCollection(new DirectoryInfo(path)));
     }
 
-    private string GetPathFromUri(Uri uri)
+    protected virtual string GetPathFromUri(Uri uri)
     {
         // Determine the path
         var requestedPath = UriHelper.GetDecodedPath(uri)[1..].Replace('/', Path.DirectorySeparatorChar);
@@ -62,7 +63,7 @@ public abstract class DiskStoreBase : IStore
         return fullPath;
     }
 
-    internal IStoreItem? CreateFromPath(string path)
+    protected virtual IStoreItem? CreateFromPath(string path)
     {
         // Check if it's a directory
         if (Directory.Exists(path))
