@@ -63,7 +63,7 @@ public abstract class DiskStoreBase : IStore
         return fullPath;
     }
 
-    protected virtual IStoreItem? CreateFromPath(string path)
+    public virtual IStoreItem? CreateFromPath(string path)
     {
         // Check if it's a directory
         if (Directory.Exists(path))
