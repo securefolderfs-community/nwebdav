@@ -21,37 +21,46 @@ public sealed class DiskStoreItem : IStoreItem
     /// <inheritdoc/>
     public string UniqueKey { get; }
 
+    /// <inheritdoc/>
+    public IPropertyManager PropertyManager { get; }
+
     public DiskStoreItem(DiskStoreBase store, DiskStoreItemPropertyManager propertyManager, FileInfo fileInfo, ILogger<DiskStoreItem> logger)
     {
         _store = store;
         _logger = logger;
         Name = fileInfo.Name;
         UniqueKey = fileInfo.FullName;
-        FileInfo = fileInfo;
         PropertyManager = propertyManager;
+        FileInfo = fileInfo;
     }
-
-    public IPropertyManager PropertyManager { get; }
 
     public FileInfo FileInfo { get; }
     public bool IsWritable => _store.IsWritable;
-    public Task<Stream> GetReadableStreamAsync(CancellationToken cancellationToken) => Task.FromResult((Stream)FileInfo.OpenRead());
 
+    /// <inheritdoc/>
+    public async Task<Stream> GetReadableStreamAsync(CancellationToken cancellationToken)
+    {
+        await Task.CompletedTask;
+        return FileInfo.OpenRead();
+    }
+
+    /// <inheritdoc/>
     public async Task<DavStatusCode> UploadFromStreamAsync(Stream inputStream, CancellationToken cancellationToken)
     {
         // Check if the item is writable
         if (!IsWritable)
             return DavStatusCode.Conflict;
 
-        // Copy the stream
         try
         {
             // Copy the information to the destination stream
             var outputStream = FileInfo.OpenWrite();
             await using (outputStream.ConfigureAwait(false))
             {
+                // Copy the stream
                 await inputStream.CopyToAsync(outputStream, cancellationToken).ConfigureAwait(false);
             }
+
             return DavStatusCode.Ok;
         }
         catch (IOException ioException) when (ioException.IsDiskFull())
@@ -60,6 +69,7 @@ public sealed class DiskStoreItem : IStoreItem
         }
     }
 
+    /// <inheritdoc/>
     public async Task<StoreItemResult> CopyAsync(IStoreCollection destination, string name, bool overwrite, CancellationToken cancellationToken)
     {
         try
