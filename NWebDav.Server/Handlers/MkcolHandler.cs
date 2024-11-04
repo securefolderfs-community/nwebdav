@@ -24,14 +24,14 @@ namespace NWebDav.Server.Handlers
         /// Handle a MKCOL request.
         /// </summary>
         /// <inheritdoc/>
-        public async Task HandleRequestAsync(IHttpContext context, IStore store, IFolder storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public async Task HandleRequestAsync(HttpListenerContext context, IStore store, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain request and response
             var request = context.Request;
             var response = context.Response;
 
             // The collection must always be created inside another collection
-            var splitUri = RequestHelper.SplitUri(request.Url);
+            var splitUri = RequestHelpers.SplitUri(request.Url);
 
             // Obtain the parent entry
             var collection = await store.GetCollectionAsync(splitUri.CollectionUri, context).ConfigureAwait(false);

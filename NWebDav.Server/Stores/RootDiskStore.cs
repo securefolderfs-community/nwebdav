@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Threading.Tasks;
 using NWebDav.Server.Helpers;
 using NWebDav.Server.Http;
@@ -19,7 +20,7 @@ namespace NWebDav.Server.Stores
             _root = root;
         }
 
-        public Task<IStoreItem> GetItemAsync(Uri uri, IHttpContext context)
+        public Task<IStoreItem> GetItemAsync(Uri uri, HttpListenerContext context)
         {
             if (!uri.LocalPath.StartsWith($"/{_remoteRootDirectory}"))
                 return Task.FromResult<IStoreItem>(null);
@@ -27,7 +28,7 @@ namespace NWebDav.Server.Stores
             return _root.GetItemAsync(UriHelper.RemoveRootDirectory(uri, _remoteRootDirectory), context);
         }
 
-        public Task<IStoreCollection> GetCollectionAsync(Uri uri, IHttpContext context)
+        public Task<IStoreCollection> GetCollectionAsync(Uri uri, HttpListenerContext context)
         {
             if (!uri.LocalPath.StartsWith($"/{_remoteRootDirectory}"))
                 return Task.FromResult<IStoreCollection>(null);

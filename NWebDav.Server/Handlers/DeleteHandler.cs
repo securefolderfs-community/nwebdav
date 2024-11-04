@@ -8,6 +8,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using NWebDav.Server.Locking;
 
 namespace NWebDav.Server.Handlers
 {
@@ -26,7 +27,7 @@ namespace NWebDav.Server.Handlers
         /// Handle a DELETE request.
         /// </summary>
         /// <inheritdoc/>
-        public async Task HandleRequestAsync(IHttpContext context, IStore store, IFolder storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public async Task HandleRequestAsync(HttpListenerContext context, IStore store, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain request and response
             var request = context.Request;
@@ -36,11 +37,16 @@ namespace NWebDav.Server.Handlers
             var errors = new UriResultCollection();
 
             // We should always remove the item from a parent container
-            var splitUri = RequestHelper.SplitUri(request.Url);
+            var splitUri = RequestHelpers.SplitUri(request.Url);
+            if (splitUri is null)
+            {
+                response.SetStatus(HttpStatusCode.InternalServerError);
+                return;
+            }
 
             // Obtain parent collection
             var parentCollection = await store.GetCollectionAsync(splitUri.CollectionUri, context).ConfigureAwait(false);
-            if (parentCollection == null)
+            if (parentCollection is null)
             {
                 // Source not found
                 response.SetStatus(HttpStatusCode.NotFound);
@@ -49,7 +55,7 @@ namespace NWebDav.Server.Handlers
 
             // Obtain the item that actually is deleted
             var deleteItem = await parentCollection.GetItemAsync(splitUri.Name, context).ConfigureAwait(false);
-            if (deleteItem == null)
+            if (deleteItem is null)
             {
                 // Source not found
                 response.SetStatus(HttpStatusCode.NotFound);
@@ -57,18 +63,19 @@ namespace NWebDav.Server.Handlers
             }
 
             // Check if the item is locked
-            if (deleteItem.LockingManager?.IsLocked(deleteItem) ?? false)
+            if (deleteItem.LockingManager is null || await deleteItem.LockingManager.IsLockedAsync(deleteItem, cancellationToken))
             {
                 // Obtain the lock token
                 var ifToken = request.GetIfLockToken();
-                if (!deleteItem.LockingManager.HasLock(deleteItem, ifToken))
+                if (ifToken is not null && deleteItem.LockingManager is not null && !await deleteItem.LockingManager.HasLockAsync(deleteItem, ifToken, cancellationToken))
                 {
                     response.SetStatus(HttpStatusCode.Locked);
                     return;
                 }
 
                 // Remove the token
-                deleteItem.LockingManager.Unlock(deleteItem, ifToken);
+                if (deleteItem.LockingManager is not null && ifToken is not null)
+                    await deleteItem.LockingManager.UnlockAsync(deleteItem, ifToken, cancellationToken);
             }
 
             // Delete item
@@ -86,12 +93,9 @@ namespace NWebDav.Server.Handlers
                 // Return the proper status
                 response.SetStatus(status);
             }
-
-
-            return;
         }
 
-        private async Task<HttpStatusCode> DeleteItemAsync(IStoreCollection collection, string name, IHttpContext context, Uri baseUri)
+        private async Task<HttpStatusCode> DeleteItemAsync(IStoreCollection collection, string name, HttpListenerContext context, Uri baseUri)
         {
             // Obtain the actual item
             var deleteItem = await collection.GetItemAsync(name, context).ConfigureAwait(false);

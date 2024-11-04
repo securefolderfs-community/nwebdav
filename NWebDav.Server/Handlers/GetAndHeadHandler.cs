@@ -10,6 +10,7 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using NWebDav.Server.Extensions;
 
 namespace NWebDav.Server.Handlers
 {
@@ -29,7 +30,7 @@ namespace NWebDav.Server.Handlers
         /// Handle a GET or HEAD request.
         /// </summary>
         /// <inheritdoc/>
-        public async Task HandleRequestAsync(IHttpContext context, IStore store, IFolder storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public async Task HandleRequestAsync(HttpListenerContext context, IStore store, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain request and response
             var request = context.Request;
@@ -133,7 +134,7 @@ namespace NWebDav.Server.Handlers
                     }
 
                     // Do not return the actual item data if ETag matches
-                    if (etag != null && request.GetHeaderValue("If-None-Match") == etag)
+                    if (etag is not null && request.Headers["If-None-Match"] == etag)
                     {
                         response.SetHeaderValue("Content-Length", "0");
                         response.SetStatus(HttpStatusCode.NotModified);

@@ -145,13 +145,13 @@ namespace NWebDav.Server.Stores
         public string FullPath => _directoryInfo.FullName;
 
         // Disk collections (a.k.a. directories don't have their own data)
-        public Task<Stream> GetReadableStreamAsync(IHttpContext context) => Task.FromResult((Stream)null);
-        public Task<HttpStatusCode> UploadFromStreamAsync(IHttpContext context, Stream inputStream) => Task.FromResult(HttpStatusCode.Conflict);
+        public Task<Stream> GetReadableStreamAsync(HttpListenerContext context) => Task.FromResult((Stream)null);
+        public Task<HttpStatusCode> UploadFromStreamAsync(HttpListenerContext context, Stream inputStream) => Task.FromResult(HttpStatusCode.Conflict);
 
         public IPropertyManager PropertyManager => DefaultPropertyManager;
         public ILockingManager LockingManager { get; }
 
-        public Task<IStoreItem> GetItemAsync(string name, IHttpContext context)
+        public Task<IStoreItem> GetItemAsync(string name, HttpListenerContext context)
         {
             // Determine the full path
             var fullPath = Path.Combine(_directoryInfo.FullName, name);
@@ -168,7 +168,7 @@ namespace NWebDav.Server.Stores
             return Task.FromResult<IStoreItem>(null);
         }
 
-        public Task<IEnumerable<IStoreItem>> GetItemsAsync(IHttpContext context)
+        public Task<IEnumerable<IStoreItem>> GetItemsAsync(HttpListenerContext context)
         {
             IEnumerable<IStoreItem> GetItemsInternal()
             {
@@ -184,7 +184,7 @@ namespace NWebDav.Server.Stores
             return Task.FromResult(GetItemsInternal());
         }
 
-        public Task<StoreItemResult> CreateItemAsync(string name, bool overwrite, IHttpContext context)
+        public Task<StoreItemResult> CreateItemAsync(string name, bool overwrite, HttpListenerContext context)
         {
             // Return error
             if (!IsWritable)
@@ -226,7 +226,7 @@ namespace NWebDav.Server.Stores
             return Task.FromResult(new StoreItemResult(result, new DiskStoreItem(LockingManager, new FileInfo(destinationPath), IsWritable)));
         }
 
-        public Task<StoreCollectionResult> CreateCollectionAsync(string name, bool overwrite, IHttpContext context)
+        public Task<StoreCollectionResult> CreateCollectionAsync(string name, bool overwrite, HttpListenerContext context)
         {
             // Return error
             if (!IsWritable)
@@ -269,20 +269,20 @@ namespace NWebDav.Server.Stores
             return Task.FromResult(new StoreCollectionResult(result, new DiskStoreCollection(LockingManager, new DirectoryInfo(destinationPath), IsWritable)));
         }
 
-        public async Task<StoreItemResult> CopyAsync(IStoreCollection destinationCollection, string name, bool overwrite, IHttpContext context)
+        public async Task<StoreItemResult> CopyAsync(IStoreCollection destinationCollection, string name, bool overwrite, HttpListenerContext context)
         {
             // Just create the folder itself
             var result = await destinationCollection.CreateCollectionAsync(name, overwrite, context).ConfigureAwait(false);
             return new StoreItemResult(result.Result, result.Collection);
         }
 
-        public bool SupportsFastMove(IStoreCollection destination, string destinationName, bool overwrite, IHttpContext context)
+        public bool SupportsFastMove(IStoreCollection destination, string destinationName, bool overwrite, HttpListenerContext context)
         {
             // We can only move disk-store collections
             return destination is DiskStoreCollection;
         }
 
-        public async Task<StoreItemResult> MoveItemAsync(string sourceName, IStoreCollection destinationCollection, string destinationName, bool overwrite, IHttpContext context)
+        public async Task<StoreItemResult> MoveItemAsync(string sourceName, IStoreCollection destinationCollection, string destinationName, bool overwrite, HttpListenerContext context)
         {
             // Return error
             if (!IsWritable)
@@ -369,7 +369,7 @@ namespace NWebDav.Server.Stores
             }
         }
 
-        public Task<HttpStatusCode> DeleteItemAsync(string name, IHttpContext context)
+        public Task<HttpStatusCode> DeleteItemAsync(string name, HttpListenerContext context)
         {
             // Return error
             if (!IsWritable)
@@ -412,18 +412,5 @@ namespace NWebDav.Server.Stores
         }
 
         public EnumerationDepthMode InfiniteDepthMode => EnumerationDepthMode.Rejected;
-
-        public override int GetHashCode()
-        {
-            return _directoryInfo.FullName.GetHashCode();
-        }
-
-        public override bool Equals(object obj)
-        {
-            var storeCollection = obj as DiskStoreCollection;
-            if (storeCollection == null)
-                return false;
-            return storeCollection._directoryInfo.FullName.Equals(_directoryInfo.FullName, StringComparison.CurrentCultureIgnoreCase);
-        }
     }
 }

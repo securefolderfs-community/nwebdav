@@ -25,14 +25,14 @@ namespace NWebDav.Server.Handlers
         /// Handle a PUT request.
         /// </summary>
         /// <inheritdoc/>
-        public async Task HandleRequestAsync(IHttpContext context, IStore store, IFolder storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public async Task HandleRequestAsync(HttpListenerContext context, IStore store, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain request and response
             var request = context.Request;
             var response = context.Response;
 
             // It's not a collection, so we'll try again by fetching the item in the parent collection
-            var splitUri = RequestHelper.SplitUri(request.Url);
+            var splitUri = RequestHelpers.SplitUri(request.Url);
 
             // Obtain collection
             var collection = await store.GetCollectionAsync(splitUri.CollectionUri, context).ConfigureAwait(false);

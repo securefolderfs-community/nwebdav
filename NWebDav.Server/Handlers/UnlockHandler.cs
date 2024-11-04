@@ -24,7 +24,7 @@ namespace NWebDav.Server.Handlers
         /// Handle a UNLOCK request.
         /// </summary>
         /// <inheritdoc/>
-        public async Task HandleRequestAsync(IHttpContext context, IStore store, IFolder storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public async Task HandleRequestAsync(HttpListenerContext context, IStore store, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain request and response
             var request = context.Request;
@@ -52,7 +52,7 @@ namespace NWebDav.Server.Handlers
             }
 
             // Perform the lock
-            var result = lockingManager.Unlock(item, lockToken);
+            var result = await lockingManager.UnlockAsync(item, lockToken, cancellationToken);
 
             // Send response
             response.SetStatus(result);

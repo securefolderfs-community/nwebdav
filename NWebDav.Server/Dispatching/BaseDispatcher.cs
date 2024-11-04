@@ -25,7 +25,7 @@ namespace NWebDav.Server.Dispatching
         }
 
         /// <inheritdoc/>
-        public async Task DispatchRequestAsync(IHttpContext context, CancellationToken cancellationToken = default)
+        public async Task DispatchRequestAsync(HttpListenerContext context, CancellationToken cancellationToken = default)
         {
             // Make sure a HTTP context is specified
             if (context == null)
@@ -123,7 +123,7 @@ namespace NWebDav.Server.Dispatching
                 try
                 {
                     // Always close the context
-                    await context.DisposeAsync().ConfigureAwait(false);
+                    context.Response.Close();
                 }
                 catch (Exception)
                 {
@@ -137,12 +137,12 @@ namespace NWebDav.Server.Dispatching
         /// Invokes and completes request for a given <paramref name="requestHandler"/>.
         /// </summary>
         /// <param name="requestHandler">The <see cref="IRequestHandler"/> to use for handling <paramref name="context"/>.</param>
-        /// <param name="context">The <see cref="IHttpContext"/> of the operation.</param>
+        /// <param name="context">The <see cref="HttpListenerContext"/> of the operation.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> that cancels this action.</param>
         /// <returns>A <see cref="Task"/> that represents the asynchronous operation. Value is true if the operation is implemented and ran to completion, otherwise false.</returns>
         /// <remarks>
         /// The return value does not represent the processed result - it does not guarantee that the operation completed as expected, only that the operation is implemented.
         /// </remarks>
-        protected abstract Task<bool> InvokeRequestAsync(IRequestHandler requestHandler, IHttpContext context, CancellationToken cancellationToken);
+        protected abstract Task<bool> InvokeRequestAsync(IRequestHandler requestHandler, HttpListenerContext context, CancellationToken cancellationToken);
     }
 }

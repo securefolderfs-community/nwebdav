@@ -26,14 +26,14 @@ namespace NWebDav.Server.Handlers
         /// Handle a MOVE request.
         /// </summary>
         /// <inheritdoc/>
-        public async Task HandleRequestAsync(IHttpContext context, IStore store, IFolder storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public async Task HandleRequestAsync(HttpListenerContext context, IStore store, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain request and response
             var request = context.Request;
             var response = context.Response;
 
             // We should always move the item from a parent container
-            var splitSourceUri = RequestHelper.SplitUri(request.Url);
+            var splitSourceUri = RequestHelpers.SplitUri(request.Url);
 
             // Obtain source collection
             var sourceCollection = await store.GetCollectionAsync(splitSourceUri.CollectionUri, context).ConfigureAwait(false);
@@ -71,7 +71,7 @@ namespace NWebDav.Server.Handlers
             }
 
             // We should always move the item to a parent
-            var splitDestinationUri = RequestHelper.SplitUri(destinationUri);
+            var splitDestinationUri = RequestHelpers.SplitUri(destinationUri);
 
             // Obtain destination collection
             var destinationCollection = await store.GetCollectionAsync(splitDestinationUri.CollectionUri, context).ConfigureAwait(false);
@@ -118,7 +118,7 @@ namespace NWebDav.Server.Handlers
             }
         }
 
-        private async Task MoveAsync(IStoreCollection sourceCollection, IStoreItem moveItem, IStoreCollection destinationCollection, string destinationName, bool overwrite, IHttpContext context, Uri baseUri, UriResultCollection errors)
+        private async Task MoveAsync(IStoreCollection sourceCollection, IStoreItem moveItem, IStoreCollection destinationCollection, string destinationName, bool overwrite, HttpListenerContext context, Uri baseUri, UriResultCollection errors)
         {
             // Determine the new base URI
             var subBaseUri = UriHelper.Combine(baseUri, destinationName);

@@ -122,9 +122,9 @@ namespace NWebDav.Server.Stores
         public string Name => _fileInfo.Name;
         public string UniqueKey => _fileInfo.FullName;
         public string FullPath => _fileInfo.FullName;
-        public Task<Stream> GetReadableStreamAsync(IHttpContext context) => Task.FromResult((Stream)_fileInfo.OpenRead());
+        public Task<Stream> GetReadableStreamAsync(HttpListenerContext context) => Task.FromResult((Stream)_fileInfo.OpenRead());
 
-        public async Task<HttpStatusCode> UploadFromStreamAsync(IHttpContext context, Stream inputStream)
+        public async Task<HttpStatusCode> UploadFromStreamAsync(HttpListenerContext context, Stream inputStream)
         {
             // Check if the item is writable
             if (!IsWritable)
@@ -149,7 +149,7 @@ namespace NWebDav.Server.Stores
         public IPropertyManager PropertyManager => DefaultPropertyManager;
         public ILockingManager LockingManager { get; }
 
-        public async Task<StoreItemResult> CopyAsync(IStoreCollection destination, string name, bool overwrite, IHttpContext context)
+        public async Task<StoreItemResult> CopyAsync(IStoreCollection destination, string name, bool overwrite, HttpListenerContext context)
         {
             try
             {

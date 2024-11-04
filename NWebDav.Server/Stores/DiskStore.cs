@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Security;
 using System.Threading.Tasks;
 using NWebDav.Server.Helpers;
@@ -21,7 +22,7 @@ namespace NWebDav.Server.Stores
         public bool IsWritable { get; }
         public ILockingManager LockingManager { get; }
 
-        public virtual Task<IStoreItem> GetItemAsync(Uri uri, IHttpContext context)
+        public virtual Task<IStoreItem> GetItemAsync(Uri uri, HttpListenerContext context)
         {
             // Determine the path from the uri
             var path = GetPathFromUri(uri);
@@ -38,7 +39,7 @@ namespace NWebDav.Server.Stores
             return Task.FromResult<IStoreItem>(null);
         }
 
-        public virtual Task<IStoreCollection> GetCollectionAsync(Uri uri, IHttpContext context)
+        public virtual Task<IStoreCollection> GetCollectionAsync(Uri uri, HttpListenerContext context)
         {
             // Determine the path from the uri
             var path = GetPathFromUri(uri);

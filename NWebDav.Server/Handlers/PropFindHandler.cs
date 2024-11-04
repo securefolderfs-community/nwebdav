@@ -51,7 +51,7 @@ namespace NWebDav.Server.Handlers
         /// Handle a PROPFIND request.
         /// </summary>
         /// <inheritdoc/>
-        public async Task HandleRequestAsync(IHttpContext context, IStore store, IFolder storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public async Task HandleRequestAsync(HttpListenerContext context, IStore store, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain request and response
             var request = context.Request;
@@ -166,7 +166,7 @@ namespace NWebDav.Server.Handlers
             await response.SendResponseAsync(HttpStatusCode.MultiStatus, xDocument, logger, cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task AddPropertyAsync(IHttpContext context, XElement xResponse, XElement xPropStatValues, IPropertyManager propertyManager, IStoreItem item, XName propertyName, IList<XName> addedProperties, ILogger? logger)
+        private async Task AddPropertyAsync(HttpListenerContext context, XElement xResponse, XElement xPropStatValues, IPropertyManager propertyManager, IStoreItem item, XName propertyName, IList<XName> addedProperties, ILogger? logger)
         {
             if (!addedProperties.Contains(propertyName))
             {
@@ -210,7 +210,7 @@ namespace NWebDav.Server.Handlers
             }
         }
 
-        private static async Task<PropertyMode> GetRequestedPropertiesAsync(IHttpRequest request, ICollection<XName> properties, ILogger? logger, CancellationToken cancellationToken)
+        private static async Task<PropertyMode> GetRequestedPropertiesAsync(HttpListenerRequest request, ICollection<XName> properties, ILogger? logger, CancellationToken cancellationToken)
         {
             // Create an XML document from the stream
             var xDocument = await request.LoadXmlDocumentAsync(logger, cancellationToken).ConfigureAwait(false);
@@ -260,7 +260,7 @@ namespace NWebDav.Server.Handlers
             return propertyMode;
         }
 
-        private async Task AddEntriesAsync(IStoreCollection collection, int depth, IHttpContext context, Uri uri, IList<PropertyEntry> entries)
+        private async Task AddEntriesAsync(IStoreCollection collection, int depth, HttpListenerContext context, Uri uri, IList<PropertyEntry> entries)
         {
             // Add the collection to the list
             entries.Add(new PropertyEntry(uri, collection));

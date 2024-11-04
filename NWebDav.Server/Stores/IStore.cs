@@ -74,8 +74,8 @@ namespace NWebDav.Server.Stores
 
     public interface IStore // TODO(wd): Replace with IStorageService
     {
-        Task<IStoreItem> GetItemAsync(Uri uri, IHttpContext context);
-        Task<IStoreCollection> GetCollectionAsync(Uri uri, IHttpContext context);
+        Task<IStoreItem> GetItemAsync(Uri uri, HttpListenerContext context);
+        Task<IStoreCollection?> GetCollectionAsync(Uri uri, HttpListenerContext context);
     }
 
     public interface IStoreItem // TODO(wd): Replace with IDavFile, IDavStorable
@@ -85,17 +85,17 @@ namespace NWebDav.Server.Stores
         string UniqueKey { get; }
 
         // Read/Write access to the data
-        Task<Stream> GetReadableStreamAsync(IHttpContext context);
-        Task<HttpStatusCode> UploadFromStreamAsync(IHttpContext context, Stream source);
+        Task<Stream> GetReadableStreamAsync(HttpListenerContext context);
+        Task<HttpStatusCode> UploadFromStreamAsync(HttpListenerContext context, Stream source);
 
         // Copy support
-        Task<StoreItemResult> CopyAsync(IStoreCollection destination, string name, bool overwrite, IHttpContext context);
+        Task<StoreItemResult> CopyAsync(IStoreCollection destination, string name, bool overwrite, HttpListenerContext context);
 
         // Property support
         IPropertyManager PropertyManager { get; }
 
         // Locking support
-        ILockingManager LockingManager { get; }
+        ILockingManager? LockingManager { get; }
     }
 
     public interface IStoreCollection : IStoreItem // TODO(wd): Replace with IDavFolder, IDavStorable
@@ -104,22 +104,22 @@ namespace NWebDav.Server.Stores
         
 
         // Get specific item (or all items)
-        Task<IStoreItem> GetItemAsync(string name, IHttpContext context);
+        Task<IStoreItem?> GetItemAsync(string name, HttpListenerContext context);
 
-        Task<IEnumerable<IStoreItem>> GetItemsAsync(IHttpContext context);
+        Task<IEnumerable<IStoreItem>> GetItemsAsync(HttpListenerContext context);
 
         // Create items and collections and add to the collection
-        Task<StoreItemResult> CreateItemAsync(string name, bool overwrite, IHttpContext context);
-        Task<StoreCollectionResult> CreateCollectionAsync(string name, bool overwrite, IHttpContext context);
+        Task<StoreItemResult> CreateItemAsync(string name, bool overwrite, HttpListenerContext context);
+        Task<StoreCollectionResult> CreateCollectionAsync(string name, bool overwrite, HttpListenerContext context);
 
         // Checks if the collection can be moved directly to the destination
-        bool SupportsFastMove(IStoreCollection destination, string destinationName, bool overwrite, IHttpContext context);
+        bool SupportsFastMove(IStoreCollection destination, string destinationName, bool overwrite, HttpListenerContext context);
 
         // Move items between collections
-        Task<StoreItemResult> MoveItemAsync(string sourceName, IStoreCollection destination, string destinationName, bool overwrite, IHttpContext context);
+        Task<StoreItemResult> MoveItemAsync(string sourceName, IStoreCollection destination, string destinationName, bool overwrite, HttpListenerContext context);
 
         // Delete items from collection
-        Task<HttpStatusCode> DeleteItemAsync(string name, IHttpContext context);
+        Task<HttpStatusCode> DeleteItemAsync(string name, HttpListenerContext context);
 
         EnumerationDepthMode InfiniteDepthMode { get; }
     }

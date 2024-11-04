@@ -1,8 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using NWebDav.Server.Helpers;
-using NWebDav.Server.Http;
 using NWebDav.Server.Stores;
-using OwlCore.Storage;
 using System;
 using System.Net;
 using System.Threading;
@@ -26,7 +24,7 @@ namespace NWebDav.Server.Handlers
         /// Handle a COPY request.
         /// </summary>
         /// <inheritdoc/>
-        public async Task HandleRequestAsync(IHttpContext context, IStore store, IFolder storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public async Task HandleRequestAsync(HttpListenerContext context, IStore store, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain request and response
             var request = context.Request;
@@ -53,7 +51,7 @@ namespace NWebDav.Server.Handlers
             var overwrite = request.GetOverwrite();
 
             // Split the destination Uri
-            var destination = RequestHelper.SplitUri(destinationUri);
+            var destination = RequestHelpers.SplitUri(destinationUri);
 
             // Obtain the destination collection
             var destinationCollection = await store.GetCollectionAsync(destination.CollectionUri, context).ConfigureAwait(false);
@@ -98,7 +96,7 @@ namespace NWebDav.Server.Handlers
             }
         }
 
-        private async Task CopyAsync(IStoreItem source, IStoreCollection destinationCollection, string name, bool overwrite, int depth, IHttpContext context, Uri baseUri, UriResultCollection errors)
+        private async Task CopyAsync(IStoreItem source, IStoreCollection destinationCollection, string name, bool overwrite, int depth, HttpListenerContext context, Uri baseUri, UriResultCollection errors)
         {
             // Determine the new base Uri
             var newBaseUri = UriHelper.Combine(baseUri, name);
