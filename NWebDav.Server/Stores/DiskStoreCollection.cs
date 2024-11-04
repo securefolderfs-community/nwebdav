@@ -14,7 +14,7 @@ using System.Xml.Linq;
 namespace NWebDav.Server.Stores
 {
     [DebuggerDisplay("{_directoryInfo.FullPath}\\")]
-    public sealed class DiskStoreCollection : IDiskStoreCollection
+    public sealed class DiskStoreCollection : IStoreCollection
     {
         private static readonly XElement s_xDavCollection = new XElement(WebDavNamespaces.DavNs + "collection");
         private readonly DirectoryInfo _directoryInfo;

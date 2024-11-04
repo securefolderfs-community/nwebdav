@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace NWebDav.Server.Stores
 {
     [DebuggerDisplay("{_fileInfo.FullPath}")]
-    public sealed class DiskStoreItem : IDiskStoreItem
+    public sealed class DiskStoreItem : IStoreItem
     {
         private readonly FileInfo _fileInfo;
 
