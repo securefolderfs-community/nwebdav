@@ -54,7 +54,7 @@ namespace NWebDav.Server.Handlers
             var destination = RequestHelpers.SplitUri(destinationUri);
 
             // Obtain the destination collection
-            var destinationCollection = await store.GetCollectionAsync(destination.CollectionUri, context).ConfigureAwait(false);
+            var destinationCollection = await store.GetCollectionAsync(destination.CollectionUri, cancellationToken).ConfigureAwait(false);
             if (destinationCollection == null)
             {
                 // Source not found
@@ -63,7 +63,7 @@ namespace NWebDav.Server.Handlers
             }
 
             // Obtain the source item
-            var sourceItem = await store.GetItemAsync(request.Url, context).ConfigureAwait(false);
+            var sourceItem = await store.GetItemAsync(request.Url, cancellationToken).ConfigureAwait(false);
             if (sourceItem == null)
             {
                 // Source not found

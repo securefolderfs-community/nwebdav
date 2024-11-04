@@ -43,7 +43,7 @@ namespace NWebDav.Server.Handlers
             var range = request.GetRange();
 
             // Obtain the WebDAV collection
-            var entry = await store.GetItemAsync(request.Url, context).ConfigureAwait(false);
+            var entry = await store.GetItemAsync(request.Url, cancellationToken).ConfigureAwait(false);
             if (entry == null)
             {
                 // Set status to not found

@@ -45,7 +45,7 @@ namespace NWebDav.Server.Handlers
             }
 
             // Obtain parent collection
-            var parentCollection = await store.GetCollectionAsync(splitUri.CollectionUri, context).ConfigureAwait(false);
+            var parentCollection = await store.GetCollectionAsync(splitUri.CollectionUri, cancellationToken).ConfigureAwait(false);
             if (parentCollection is null)
             {
                 // Source not found

@@ -65,7 +65,7 @@ namespace NWebDav.Server.Handlers
             var entries = new List<PropertyEntry>();
 
             // Obtain entry
-            var topEntry = await store.GetItemAsync(request.Url, context).ConfigureAwait(false);
+            var topEntry = await store.GetItemAsync(request.Url, cancellationToken).ConfigureAwait(false);
             if (topEntry == null)
             {
                 response.SetStatus(HttpStatusCode.NotFound);

@@ -109,7 +109,7 @@ namespace NWebDav.Server.Handlers
             var response = context.Response;
 
             // Obtain item
-            var item = await store.GetItemAsync(request.Url, context).ConfigureAwait(false);
+            var item = await store.GetItemAsync(request.Url, cancellationToken).ConfigureAwait(false);
             if (item == null)
             {
                 response.SetStatus(HttpStatusCode.NotFound);

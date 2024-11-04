@@ -36,7 +36,7 @@ namespace NWebDav.Server.Handlers
             var splitSourceUri = RequestHelpers.SplitUri(request.Url);
 
             // Obtain source collection
-            var sourceCollection = await store.GetCollectionAsync(splitSourceUri.CollectionUri, context).ConfigureAwait(false);
+            var sourceCollection = await store.GetCollectionAsync(splitSourceUri.CollectionUri, cancellationToken).ConfigureAwait(false);
             if (sourceCollection == null)
             {
                 // Source not found
@@ -74,7 +74,7 @@ namespace NWebDav.Server.Handlers
             var splitDestinationUri = RequestHelpers.SplitUri(destinationUri);
 
             // Obtain destination collection
-            var destinationCollection = await store.GetCollectionAsync(splitDestinationUri.CollectionUri, context).ConfigureAwait(false);
+            var destinationCollection = await store.GetCollectionAsync(splitDestinationUri.CollectionUri, cancellationToken).ConfigureAwait(false);
             if (destinationCollection == null)
             {
                 // Source not found
