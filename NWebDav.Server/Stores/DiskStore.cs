@@ -34,7 +34,7 @@ namespace NWebDav.Server.Stores
 
             // Check if it's a file
             if (File.Exists(path))
-                return Task.FromResult<IStoreItem>(new DiskStoreItem(LockingManager, new FileInfo(path), IsWritable));
+                return Task.FromResult<IStoreItem>(new DiskStoreFile(LockingManager, new FileInfo(path), IsWritable));
 
             // The item doesn't exist
             return Task.FromResult<IStoreItem>(null);

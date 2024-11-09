@@ -48,10 +48,17 @@ namespace NWebDav.Server.Handlers
             var status = result.Result;
             if (status == HttpStatusCode.Created || status == HttpStatusCode.NoContent)
             {
-                // Upload the information to the item
-                var uploadStatus = await result.Item.UploadFromStreamAsync(context, request.InputStream ?? Stream.Null).ConfigureAwait(false);
-                if (uploadStatus != HttpStatusCode.OK)
-                    status = uploadStatus;
+                if (result.Item is IStoreFile storeFile)
+                {
+                    // Upload the information to the item
+                    var uploadStatus = await storeFile.UploadFromStreamAsync(context, request.InputStream ?? Stream.Null).ConfigureAwait(false);
+                    if (uploadStatus != HttpStatusCode.OK)
+                        status = uploadStatus;
+                }
+                else
+                {
+                    status = HttpStatusCode.Conflict;
+                }
             }
 
             // Finished writing

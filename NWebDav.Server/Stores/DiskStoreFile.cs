@@ -12,21 +12,21 @@ using System.Threading.Tasks;
 namespace NWebDav.Server.Stores
 {
     [DebuggerDisplay("{_fileInfo.FullPath}")]
-    public sealed class DiskStoreItem : IStoreItem
+    public sealed class DiskStoreFile : IStoreItem
     {
         private readonly FileInfo _fileInfo;
 
-        public DiskStoreItem(ILockingManager lockingManager, FileInfo fileInfo, bool isWritable)
+        public DiskStoreFile(ILockingManager lockingManager, FileInfo fileInfo, bool isWritable)
         {
             LockingManager = lockingManager;
             _fileInfo = fileInfo;
             IsWritable = isWritable;
         }
 
-        public static PropertyManager<DiskStoreItem> DefaultPropertyManager { get; } = new PropertyManager<DiskStoreItem>(new DavProperty<DiskStoreItem>[]
+        public static PropertyManager<DiskStoreFile> DefaultPropertyManager { get; } = new PropertyManager<DiskStoreFile>(new DavProperty<DiskStoreFile>[]
         {
             // RFC-2518 properties
-            new DavCreationDate<DiskStoreItem>
+            new DavCreationDate<DiskStoreFile>
             {
                 Getter = (context, item) => item._fileInfo.CreationTimeUtc,
                 Setter = (context, item, value) =>
@@ -35,26 +35,26 @@ namespace NWebDav.Server.Stores
                     return HttpStatusCode.OK;
                 }
             },
-            new DavDisplayName<DiskStoreItem>
+            new DavDisplayName<DiskStoreFile>
             {
                 Getter = (context, item) => item._fileInfo.Name
             },
-            new DavGetContentLength<DiskStoreItem>
+            new DavGetContentLength<DiskStoreFile>
             {
                 Getter = (context, item) => item._fileInfo.Length
             },
-            new DavGetContentType<DiskStoreItem>
+            new DavGetContentType<DiskStoreFile>
             {
                 Getter = (context, item) => item.DetermineContentType()
             },
-            new DavGetEtag<DiskStoreItem>
+            new DavGetEtag<DiskStoreFile>
             {
                 // Calculating the Etag is an expensive operation,
                 // because we need to scan the entire file.
                 IsExpensive = true,
                 Getter = (context, item) => item.CalculateEtag()
             },
-            new DavGetLastModified<DiskStoreItem>
+            new DavGetLastModified<DiskStoreFile>
             {
                 Getter = (context, item) => item._fileInfo.LastWriteTimeUtc,
                 Setter = (context, item, value) =>
@@ -63,24 +63,24 @@ namespace NWebDav.Server.Stores
                     return HttpStatusCode.OK;
                 }
             },
-            new DavGetResourceType<DiskStoreItem>
+            new DavGetResourceType<DiskStoreFile>
             {
                 Getter = (context, item) => null
             },
 
             // Default locking property handling via the LockingManager
-            new DavLockDiscoveryDefault<DiskStoreItem>(),
-            new DavSupportedLockDefault<DiskStoreItem>(),
+            new DavLockDiscoveryDefault<DiskStoreFile>(),
+            new DavSupportedLockDefault<DiskStoreFile>(),
 
             // Hopmann/Lippert collection properties
             // (although not a collection, the IsHidden property might be valuable)
-            new DavExtCollectionIsHidden<DiskStoreItem>
+            new DavExtCollectionIsHidden<DiskStoreFile>
             {
                 Getter = (context, item) => (item._fileInfo.Attributes & FileAttributes.Hidden) != 0
             },
 
             // Win32 extensions
-            new Win32CreationTime<DiskStoreItem>
+            new Win32CreationTime<DiskStoreFile>
             {
                 Getter = (context, item) => item._fileInfo.CreationTimeUtc,
                 Setter = (context, item, value) =>
@@ -89,7 +89,7 @@ namespace NWebDav.Server.Stores
                     return HttpStatusCode.OK;
                 }
             },
-            new Win32LastAccessTime<DiskStoreItem>
+            new Win32LastAccessTime<DiskStoreFile>
             {
                 Getter = (context, item) => item._fileInfo.LastAccessTimeUtc,
                 Setter = (context, item, value) =>
@@ -98,7 +98,7 @@ namespace NWebDav.Server.Stores
                     return HttpStatusCode.OK;
                 }
             },
-            new Win32LastModifiedTime<DiskStoreItem>
+            new Win32LastModifiedTime<DiskStoreFile>
             {
                 Getter = (context, item) => item._fileInfo.LastWriteTimeUtc,
                 Setter = (context, item, value) =>
@@ -107,7 +107,7 @@ namespace NWebDav.Server.Stores
                     return HttpStatusCode.OK;
                 }
             },
-            new Win32FileAttributes<DiskStoreItem>
+            new Win32FileAttributes<DiskStoreFile>
             {
                 Getter = (context, item) => item._fileInfo.Attributes,
                 Setter = (context, item, value) =>
@@ -120,7 +120,7 @@ namespace NWebDav.Server.Stores
 
         public bool IsWritable { get; }
         public string Name => _fileInfo.Name;
-        public string UniqueKey => _fileInfo.FullName;
+        public string Id => _fileInfo.FullName;
         public string FullPath => _fileInfo.FullName;
         public Task<Stream> GetReadableStreamAsync(HttpListenerContext context) => Task.FromResult((Stream)_fileInfo.OpenRead());
 
@@ -161,7 +161,7 @@ namespace NWebDav.Server.Stores
                     if (!diskCollection.IsWritable)
                         return new StoreItemResult(HttpStatusCode.PreconditionFailed);
 
-                    var destinationPath = Path.Combine(diskCollection.FullPath, name);
+                    var destinationPath = Path.Combine(diskCollection.Id, name);
 
                     // Check if the file already exists
                     var fileExists = File.Exists(destinationPath);
@@ -182,11 +182,18 @@ namespace NWebDav.Server.Stores
                     // Check if the item could be created
                     if (result.Item != null)
                     {
-                        using (var sourceStream = await GetReadableStreamAsync(context).ConfigureAwait(false))
+                        if (result.Item is IStoreFile storeFile)
                         {
-                            var copyResult = await result.Item.UploadFromStreamAsync(context, sourceStream).ConfigureAwait(false);
-                            if (copyResult != HttpStatusCode.OK)
-                                return new StoreItemResult(copyResult, result.Item);
+                            using (var sourceStream = await GetReadableStreamAsync(context).ConfigureAwait(false))
+                            {
+                                var copyResult = await storeFile.UploadFromStreamAsync(context, sourceStream).ConfigureAwait(false);
+                                if (copyResult != HttpStatusCode.OK)
+                                    return new StoreItemResult(copyResult, result.Item);
+                            }
+                        }
+                        else
+                        {
+                            return new(HttpStatusCode.Conflict, result.Item);
                         }
                     }
 
@@ -209,7 +216,7 @@ namespace NWebDav.Server.Stores
 
         public override bool Equals(object obj)
         {
-            if (!(obj is DiskStoreItem storeItem))
+            if (!(obj is DiskStoreFile storeItem))
                 return false;
             return storeItem._fileInfo.FullName.Equals(_fileInfo.FullName, StringComparison.CurrentCultureIgnoreCase);
         }

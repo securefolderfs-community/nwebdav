@@ -141,8 +141,7 @@ namespace NWebDav.Server.Stores
 
         public bool IsWritable { get; }
         public string Name => _directoryInfo.Name;
-        public string UniqueKey => _directoryInfo.FullName;
-        public string FullPath => _directoryInfo.FullName;
+        public string Id => _directoryInfo.FullName;
 
         // Disk collections (a.k.a. directories don't have their own data)
         public Task<Stream> GetReadableStreamAsync(HttpListenerContext context) => Task.FromResult((Stream)null);
@@ -158,7 +157,7 @@ namespace NWebDav.Server.Stores
 
             // Check if the item is a file
             if (File.Exists(fullPath))
-                return Task.FromResult<IStoreItem>(new DiskStoreItem(LockingManager, new FileInfo(fullPath), IsWritable));
+                return Task.FromResult<IStoreItem>(new DiskStoreFile(LockingManager, new FileInfo(fullPath), IsWritable));
 
             // Check if the item is a directory
             if (Directory.Exists(fullPath))
@@ -178,7 +177,7 @@ namespace NWebDav.Server.Stores
 
                 // Add all files
                 foreach (var file in _directoryInfo.GetFiles())
-                    yield return new DiskStoreItem(LockingManager, file, IsWritable);
+                    yield return new DiskStoreFile(LockingManager, file, IsWritable);
             }
 
             return Task.FromResult(GetItemsInternal());
@@ -191,7 +190,7 @@ namespace NWebDav.Server.Stores
                 return Task.FromResult(new StoreItemResult(HttpStatusCode.PreconditionFailed));
 
             // Determine the destination path
-            var destinationPath = Path.Combine(FullPath, name);
+            var destinationPath = Path.Combine(Id, name);
 
             // Determine result
             HttpStatusCode result;
@@ -223,7 +222,7 @@ namespace NWebDav.Server.Stores
             }
 
             // Return result
-            return Task.FromResult(new StoreItemResult(result, new DiskStoreItem(LockingManager, new FileInfo(destinationPath), IsWritable)));
+            return Task.FromResult(new StoreItemResult(result, new DiskStoreFile(LockingManager, new FileInfo(destinationPath), IsWritable)));
         }
 
         public Task<StoreCollectionResult> CreateCollectionAsync(string name, bool overwrite, HttpListenerContext context)
@@ -233,7 +232,7 @@ namespace NWebDav.Server.Stores
                 return Task.FromResult(new StoreCollectionResult(HttpStatusCode.PreconditionFailed));
 
             // Determine the destination path
-            var destinationPath = Path.Combine(FullPath, name);
+            var destinationPath = Path.Combine(Id, name);
 
             // Check if the directory can be overwritten
             HttpStatusCode result;
@@ -336,10 +335,10 @@ namespace NWebDav.Server.Stores
 
                     switch (item)
                     {
-                        case DiskStoreItem _:
+                        case DiskStoreFile _:
                             // Move the file
                             File.Move(sourcePath, destinationPath);
-                            return new StoreItemResult(result, new DiskStoreItem(LockingManager, new FileInfo(destinationPath), IsWritable));
+                            return new StoreItemResult(result, new DiskStoreFile(LockingManager, new FileInfo(destinationPath), IsWritable));
 
                         case DiskStoreCollection _:
                             // Move the directory

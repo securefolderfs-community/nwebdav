@@ -1,16 +1,14 @@
 ﻿using Microsoft.Extensions.Logging;
+using NWebDav.Server.Extensions;
 using NWebDav.Server.Helpers;
-using NWebDav.Server.Http;
 using NWebDav.Server.Props;
 using NWebDav.Server.Stores;
-using OwlCore.Storage;
 using System;
 using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using NWebDav.Server.Extensions;
 
 namespace NWebDav.Server.Handlers
 {
@@ -79,8 +77,14 @@ namespace NWebDav.Server.Handlers
                     response.SetHeaderValue("Content-Language", contentLanguage);
             }
 
+            if (entry is not IStoreFile storeFile)
+            {
+                response.SetStatus(HttpStatusCode.NoContent);
+                return;
+            }
+
             // Stream the actual entry
-            using (var stream = await entry.GetReadableStreamAsync(context).ConfigureAwait(false))
+            using (var stream = await storeFile.GetReadableStreamAsync(context).ConfigureAwait(false))
             {
                 if (stream != null && stream != Stream.Null)
                 {

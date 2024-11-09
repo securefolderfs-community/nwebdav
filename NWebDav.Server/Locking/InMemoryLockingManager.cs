@@ -31,7 +31,7 @@ namespace NWebDav.Server.Locking
             var timeout = timeouts.Cast<int?>().FirstOrDefault();
 
             // Determine the item's key
-            var key = item.UniqueKey;
+            var key = item.Id;
 
             lock (_itemLocks)
             {
@@ -72,7 +72,7 @@ namespace NWebDav.Server.Locking
                 return HttpStatusCode.PreconditionFailed;
 
             // Determine the item's key
-            var key = item.UniqueKey;
+            var key = item.Id;
 
             lock (_itemLocks)
             {
@@ -124,7 +124,7 @@ namespace NWebDav.Server.Locking
                 return new LockResult(HttpStatusCode.PreconditionFailed);
 
             // Determine the item's key
-            var key = item.UniqueKey;
+            var key = item.Id;
 
             lock (_itemLocks)
             {
@@ -160,7 +160,7 @@ namespace NWebDav.Server.Locking
             cancellationToken.ThrowIfCancellationRequested();
 
             // Determine the item's key
-            var key = item.UniqueKey;
+            var key = item.Id;
 
             lock (_itemLocks)
             {
@@ -190,7 +190,7 @@ namespace NWebDav.Server.Locking
         protected override bool IsLocked(IStoreItem item)
         {
             // Determine the item's key
-            var key = item.UniqueKey;
+            var key = item.Id;
 
             lock (_itemLocks)
             {
@@ -213,7 +213,7 @@ namespace NWebDav.Server.Locking
         protected override bool HasLock(IStoreItem item, Uri lockTokenUri)
         {
             // Determine the item's key
-            var key = item.UniqueKey;
+            var key = item.Id;
 
             // Determine the actual lock token
             var lockToken = GetTokenFromLockToken(lockTokenUri);

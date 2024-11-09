@@ -72,26 +72,6 @@ namespace NWebDav.Server.Stores
         public override int GetHashCode() => Result.GetHashCode() ^ (Collection?.GetHashCode() ?? 0);
     }
 
-    public interface IStoreItem // TODO(wd): Replace with IDavFile, IDavStorable
-    {
-        // Item properties
-        string Name { get; }
-        string UniqueKey { get; }
-
-        // Read/Write access to the data
-        Task<Stream> GetReadableStreamAsync(HttpListenerContext context);
-        Task<HttpStatusCode> UploadFromStreamAsync(HttpListenerContext context, Stream source);
-
-        // Copy support
-        Task<StoreItemResult> CopyAsync(IStoreCollection destination, string name, bool overwrite, HttpListenerContext context);
-
-        // Property support
-        IPropertyManager PropertyManager { get; }
-
-        // Locking support
-        ILockingManager? LockingManager { get; }
-    }
-
     public interface IStoreCollection : IStoreItem // TODO(wd): Replace with IDavFolder, IDavStorable
     {
 
