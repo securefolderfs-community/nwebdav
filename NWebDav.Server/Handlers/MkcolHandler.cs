@@ -43,7 +43,7 @@ namespace NWebDav.Server.Handlers
             }
 
             // Create the collection
-            var result = await collection.CreateCollectionAsync(splitUri.Name, false, context).ConfigureAwait(false);
+            var result = await collection.CreateCollectionAsync(splitUri.Name, false, cancellationToken).ConfigureAwait(false);
 
             // Finished
             response.SetStatus(result.Result);

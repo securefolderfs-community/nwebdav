@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
+using NWebDav.Server.Extensions;
 using NWebDav.Server.Helpers;
-using NWebDav.Server.Http;
 using NWebDav.Server.Stores;
 using OwlCore.Storage;
 using System;
@@ -8,7 +8,6 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using NWebDav.Server.Locking;
 
 namespace NWebDav.Server.Handlers
 {
@@ -54,7 +53,7 @@ namespace NWebDav.Server.Handlers
             }
 
             // Obtain the item that actually is deleted
-            var deleteItem = await parentCollection.GetItemAsync(splitUri.Name, context).ConfigureAwait(false);
+            var deleteItem = await parentCollection.TryGetFirstByNameAsync(splitUri.Name, cancellationToken).ConfigureAwait(false);
             if (deleteItem is null)
             {
                 // Source not found
@@ -79,7 +78,7 @@ namespace NWebDav.Server.Handlers
             }
 
             // Delete item
-            var status = await DeleteItemAsync(parentCollection, splitUri.Name, context, splitUri.CollectionUri).ConfigureAwait(false);
+            var status = await DeleteItemAsync(parentCollection, splitUri.Name, splitUri.CollectionUri, cancellationToken).ConfigureAwait(false);
             if (status == HttpStatusCode.OK && errors.HasItems)
             {
                 // Obtain the status document
@@ -95,22 +94,22 @@ namespace NWebDav.Server.Handlers
             }
         }
 
-        private async Task<HttpStatusCode> DeleteItemAsync(IStoreCollection collection, string name, HttpListenerContext context, Uri baseUri)
+        private async Task<HttpStatusCode> DeleteItemAsync(IStoreCollection collection, string name, Uri baseUri, CancellationToken cancellationToken)
         {
             // Obtain the actual item
-            var deleteItem = await collection.GetItemAsync(name, context).ConfigureAwait(false);
+            var deleteItem = await collection.TryGetFirstByNameAsync(name, cancellationToken).ConfigureAwait(false);
             if (deleteItem is IStoreCollection deleteCollection)
             {
                 // Determine the new base URI
                 var subBaseUri = UriHelper.Combine(baseUri, name);
 
                 // Delete all entries first
-                foreach (var entry in await deleteCollection.GetItemsAsync(context).ConfigureAwait(false))
-                    await DeleteItemAsync(deleteCollection, entry.Name, context, subBaseUri).ConfigureAwait(false);
+                await foreach (var entry in deleteCollection.GetItemsAsync(StorableType.All, cancellationToken).ConfigureAwait(false))
+                    await DeleteItemAsync(deleteCollection, entry.Name, subBaseUri, cancellationToken).ConfigureAwait(false);
             }
 
             // Attempt to delete the item
-            return await collection.DeleteItemAsync(name, context).ConfigureAwait(false);
+            return await collection.DeleteItemAsync(name, cancellationToken).ConfigureAwait(false);
         }
     }
 }

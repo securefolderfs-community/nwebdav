@@ -1,30 +1,115 @@
 ﻿using NWebDav.Server.Enums;
-using NWebDav.Server.Http;
+using NWebDav.Server.Extensions;
 using NWebDav.Server.Locking;
 using NWebDav.Server.Props;
+using OwlCore.Storage;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
 namespace NWebDav.Server.Stores
 {
     [DebuggerDisplay("{_directoryInfo.FullPath}\\")]
-    public sealed class DiskStoreCollection : IStoreCollection
+    public class DiskStoreCollection : IStoreCollection
     {
         private static readonly XElement s_xDavCollection = new XElement(WebDavNamespaces.DavNs + "collection");
         private readonly DirectoryInfo _directoryInfo;
 
+        /// <inheritdoc/>
+        public virtual string Id { get; }
+
+        /// <inheritdoc/>
+        public virtual string Name { get; }
+
         public DiskStoreCollection(ILockingManager lockingManager, DirectoryInfo directoryInfo, bool isWritable)
         {
-            LockingManager = lockingManager;
             _directoryInfo = directoryInfo;
+            Id = _directoryInfo.FullName;
+            Name = _directoryInfo.Name;
+            LockingManager = lockingManager;
             IsWritable = isWritable;
         }
+
+        /// <inheritdoc/>
+        public virtual async IAsyncEnumerable<IStoreItem> GetItemsAsync(StorableType type = StorableType.All, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            await Task.CompletedTask;
+            cancellationToken.ThrowIfCancellationRequested();
+
+            switch (type)
+            {
+                case StorableType.File:
+                {
+                    foreach (var filePath in Directory.EnumerateFiles(_directoryInfo.FullName))
+                        yield return NewFile(filePath);
+
+                    break;
+                }
+
+                case StorableType.Folder:
+                {
+                    foreach (var folderPath in Directory.EnumerateDirectories(_directoryInfo.FullName))
+                        yield return NewCollection(folderPath);
+
+                    break;
+                }
+
+                case StorableType.All:
+                {
+                    foreach (var item in _directoryInfo.EnumerateFileSystemInfos())
+                    {
+                        yield return item switch
+                        {
+                            FileInfo => NewFile(item.FullName),
+                            DirectoryInfo => NewCollection(item.FullName)
+                        };
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        public virtual async Task<IStoreItem> GetFirstByNameAsync(string name, CancellationToken cancellationToken)
+        {
+            await Task.CompletedTask;
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Determine the path
+            var id = Path.Combine(_directoryInfo.FullName, name);
+
+            // Check if the item is a file
+            if (File.Exists(id))
+                return NewFile(id);
+
+            // Check if the item is a directory
+            if (Directory.Exists(id))
+                return NewCollection(id);
+
+            // Item not found
+            throw new FileNotFoundException($"An item was not found. Name: '{name}'.");
+        }
+
+        protected virtual IStoreFile NewFile(string id)
+        {
+            return new DiskStoreFile(LockingManager, new(id), IsWritable);
+        }
+
+        protected virtual IStoreCollection NewCollection(string id)
+        {
+            return new DiskStoreCollection(LockingManager, new(id), IsWritable);
+        }
+
+
+
 
         public static PropertyManager<DiskStoreCollection> DefaultPropertyManager { get; } = new PropertyManager<DiskStoreCollection>(new DavProperty<DiskStoreCollection>[]
         {
@@ -140,50 +225,10 @@ namespace NWebDav.Server.Stores
         });
 
         public bool IsWritable { get; }
-        public string Name => _directoryInfo.Name;
-        public string Id => _directoryInfo.FullName;
-
-        // Disk collections (a.k.a. directories don't have their own data)
-        public Task<Stream> GetReadableStreamAsync(HttpListenerContext context) => Task.FromResult((Stream)null);
-        public Task<HttpStatusCode> UploadFromStreamAsync(HttpListenerContext context, Stream inputStream) => Task.FromResult(HttpStatusCode.Conflict);
-
         public IPropertyManager PropertyManager => DefaultPropertyManager;
         public ILockingManager LockingManager { get; }
 
-        public Task<IStoreItem> GetItemAsync(string name, HttpListenerContext context)
-        {
-            // Determine the full path
-            var fullPath = Path.Combine(_directoryInfo.FullName, name);
-
-            // Check if the item is a file
-            if (File.Exists(fullPath))
-                return Task.FromResult<IStoreItem>(new DiskStoreFile(LockingManager, new FileInfo(fullPath), IsWritable));
-
-            // Check if the item is a directory
-            if (Directory.Exists(fullPath))
-                return Task.FromResult<IStoreItem>(new DiskStoreCollection(LockingManager, new DirectoryInfo(fullPath), IsWritable));
-
-            // Item not found
-            return Task.FromResult<IStoreItem>(null);
-        }
-
-        public Task<IEnumerable<IStoreItem>> GetItemsAsync(HttpListenerContext context)
-        {
-            IEnumerable<IStoreItem> GetItemsInternal()
-            {
-                // Add all directories
-                foreach (var subDirectory in _directoryInfo.GetDirectories())
-                    yield return new DiskStoreCollection(LockingManager, subDirectory, IsWritable);
-
-                // Add all files
-                foreach (var file in _directoryInfo.GetFiles())
-                    yield return new DiskStoreFile(LockingManager, file, IsWritable);
-            }
-
-            return Task.FromResult(GetItemsInternal());
-        }
-
-        public Task<StoreItemResult> CreateItemAsync(string name, bool overwrite, HttpListenerContext context)
+        public Task<StoreItemResult> CreateItemAsync(string name, bool overwrite, CancellationToken cancellationToken)
         {
             // Return error
             if (!IsWritable)
@@ -225,7 +270,7 @@ namespace NWebDav.Server.Stores
             return Task.FromResult(new StoreItemResult(result, new DiskStoreFile(LockingManager, new FileInfo(destinationPath), IsWritable)));
         }
 
-        public Task<StoreCollectionResult> CreateCollectionAsync(string name, bool overwrite, HttpListenerContext context)
+        public Task<StoreCollectionResult> CreateCollectionAsync(string name, bool overwrite, CancellationToken cancellationToken)
         {
             // Return error
             if (!IsWritable)
@@ -268,28 +313,28 @@ namespace NWebDav.Server.Stores
             return Task.FromResult(new StoreCollectionResult(result, new DiskStoreCollection(LockingManager, new DirectoryInfo(destinationPath), IsWritable)));
         }
 
-        public async Task<StoreItemResult> CopyAsync(IStoreCollection destinationCollection, string name, bool overwrite, HttpListenerContext context)
+        public async Task<StoreItemResult> CopyAsync(IStoreCollection destinationCollection, string name, bool overwrite, CancellationToken cancellationToken)
         {
             // Just create the folder itself
-            var result = await destinationCollection.CreateCollectionAsync(name, overwrite, context).ConfigureAwait(false);
+            var result = await destinationCollection.CreateCollectionAsync(name, overwrite, cancellationToken).ConfigureAwait(false);
             return new StoreItemResult(result.Result, result.Collection);
         }
 
-        public bool SupportsFastMove(IStoreCollection destination, string destinationName, bool overwrite, HttpListenerContext context)
+        public bool SupportsFastMove(IStoreCollection destination, string destinationName, bool overwrite)
         {
             // We can only move disk-store collections
             return destination is DiskStoreCollection;
         }
 
-        public async Task<StoreItemResult> MoveItemAsync(string sourceName, IStoreCollection destinationCollection, string destinationName, bool overwrite, HttpListenerContext context)
+        public async Task<StoreItemResult> MoveItemAsync(string sourceName, IStoreCollection destinationCollection, string destinationName, bool overwrite, CancellationToken cancellationToken)
         {
             // Return error
             if (!IsWritable)
                 return new StoreItemResult(HttpStatusCode.PreconditionFailed);
 
             // Determine the object that is being moved
-            var item = await GetItemAsync(sourceName, context).ConfigureAwait(false);
-            if (item == null)
+            var item = await this.TryGetFirstByNameAsync(sourceName, cancellationToken).ConfigureAwait(false);
+            if (item is null)
                 return new StoreItemResult(HttpStatusCode.NotFound);
 
             try
@@ -354,9 +399,9 @@ namespace NWebDav.Server.Stores
                 else
                 {
                     // Attempt to copy the item to the destination collection
-                    var result = await item.CopyAsync(destinationCollection, destinationName, overwrite, context).ConfigureAwait(false);
+                    var result = await item.CopyAsync(destinationCollection, destinationName, overwrite, cancellationToken).ConfigureAwait(false);
                     if (result.Result == HttpStatusCode.Created || result.Result == HttpStatusCode.NoContent)
-                        await DeleteItemAsync(sourceName, context).ConfigureAwait(false);
+                        await DeleteItemAsync(sourceName, cancellationToken).ConfigureAwait(false);
 
                     // Return the result
                     return result;
@@ -368,7 +413,7 @@ namespace NWebDav.Server.Stores
             }
         }
 
-        public Task<HttpStatusCode> DeleteItemAsync(string name, HttpListenerContext context)
+        public Task<HttpStatusCode> DeleteItemAsync(string name, CancellationToken cancellationToken)
         {
             // Return error
             if (!IsWritable)

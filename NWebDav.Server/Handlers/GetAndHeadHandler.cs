@@ -84,7 +84,7 @@ namespace NWebDav.Server.Handlers
             }
 
             // Stream the actual entry
-            using (var stream = await storeFile.GetReadableStreamAsync(context).ConfigureAwait(false))
+            using (var stream = await storeFile.GetReadableStreamAsync(cancellationToken).ConfigureAwait(false))
             {
                 if (stream != null && stream != Stream.Null)
                 {

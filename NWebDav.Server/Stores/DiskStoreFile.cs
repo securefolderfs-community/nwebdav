@@ -7,12 +7,13 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Security.Cryptography;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace NWebDav.Server.Stores
 {
     [DebuggerDisplay("{_fileInfo.FullPath}")]
-    public sealed class DiskStoreFile : IStoreItem
+    public sealed class DiskStoreFile : IStoreFile
     {
         private readonly FileInfo _fileInfo;
 
@@ -121,10 +122,9 @@ namespace NWebDav.Server.Stores
         public bool IsWritable { get; }
         public string Name => _fileInfo.Name;
         public string Id => _fileInfo.FullName;
-        public string FullPath => _fileInfo.FullName;
-        public Task<Stream> GetReadableStreamAsync(HttpListenerContext context) => Task.FromResult((Stream)_fileInfo.OpenRead());
+        public Task<Stream> GetReadableStreamAsync(CancellationToken cancellationToken) => Task.FromResult((Stream)_fileInfo.OpenRead());
 
-        public async Task<HttpStatusCode> UploadFromStreamAsync(HttpListenerContext context, Stream inputStream)
+        public async Task<HttpStatusCode> UploadFromStreamAsync(Stream inputStream, CancellationToken cancellationToken)
         {
             // Check if the item is writable
             if (!IsWritable)
@@ -149,7 +149,7 @@ namespace NWebDav.Server.Stores
         public IPropertyManager PropertyManager => DefaultPropertyManager;
         public ILockingManager LockingManager { get; }
 
-        public async Task<StoreItemResult> CopyAsync(IStoreCollection destination, string name, bool overwrite, HttpListenerContext context)
+        public async Task<StoreItemResult> CopyAsync(IStoreCollection destination, string name, bool overwrite, CancellationToken cancellationToken)
         {
             try
             {
@@ -177,16 +177,16 @@ namespace NWebDav.Server.Stores
                 else
                 {
                     // Create the item in the destination collection
-                    var result = await destination.CreateItemAsync(name, overwrite, context).ConfigureAwait(false);
+                    var result = await destination.CreateItemAsync(name, overwrite, cancellationToken).ConfigureAwait(false);
 
                     // Check if the item could be created
                     if (result.Item != null)
                     {
                         if (result.Item is IStoreFile storeFile)
                         {
-                            using (var sourceStream = await GetReadableStreamAsync(context).ConfigureAwait(false))
+                            using (var sourceStream = await GetReadableStreamAsync(cancellationToken).ConfigureAwait(false))
                             {
-                                var copyResult = await storeFile.UploadFromStreamAsync(context, sourceStream).ConfigureAwait(false);
+                                var copyResult = await storeFile.UploadFromStreamAsync(sourceStream, cancellationToken).ConfigureAwait(false);
                                 if (copyResult != HttpStatusCode.OK)
                                     return new StoreItemResult(copyResult, result.Item);
                             }

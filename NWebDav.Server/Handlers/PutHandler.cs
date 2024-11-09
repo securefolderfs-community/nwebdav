@@ -44,14 +44,14 @@ namespace NWebDav.Server.Handlers
             }
 
             // Obtain the item
-            var result = await collection.CreateItemAsync(splitUri.Name, true, context).ConfigureAwait(false);
+            var result = await collection.CreateItemAsync(splitUri.Name, true, cancellationToken).ConfigureAwait(false);
             var status = result.Result;
             if (status == HttpStatusCode.Created || status == HttpStatusCode.NoContent)
             {
                 if (result.Item is IStoreFile storeFile)
                 {
                     // Upload the information to the item
-                    var uploadStatus = await storeFile.UploadFromStreamAsync(context, request.InputStream ?? Stream.Null).ConfigureAwait(false);
+                    var uploadStatus = await storeFile.UploadFromStreamAsync(request.InputStream ?? Stream.Null, cancellationToken).ConfigureAwait(false);
                     if (uploadStatus != HttpStatusCode.OK)
                         status = uploadStatus;
                 }
