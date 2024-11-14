@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using NWebDav.Server.Extensions;
 using NWebDav.Server.Helpers;
 using NWebDav.Server.Stores;
 using OwlCore.Storage;
@@ -7,7 +8,6 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using NWebDav.Server.Extensions;
 
 namespace NWebDav.Server.Handlers
 {
@@ -139,16 +139,21 @@ namespace NWebDav.Server.Handlers
                     await MoveAsync(moveCollection, entry, newCollectionResult.Collection, entry.Name, overwrite, subBaseUri, errors, cancellationToken).ConfigureAwait(false);
 
                 // Delete the source collection
-                var deleteResult = await sourceCollection.DeleteItemAsync(moveItem.Name, cancellationToken).ConfigureAwait(false);
+                var deleteResult = await sourceCollection.DavDeleteAsync(moveItem, cancellationToken).ConfigureAwait(false);
                 if (deleteResult != HttpStatusCode.OK)
                     errors.AddResult(subBaseUri, newCollectionResult.Result);
             }
             else
             {
-                // Items should be moved directly
-                var result = await sourceCollection.MoveItemAsync(moveItem.Name, destinationCollection, destinationName, overwrite, cancellationToken).ConfigureAwait(false);
-                if (result.Result != HttpStatusCode.Created && result.Result != HttpStatusCode.NoContent)
-                    errors.AddResult(subBaseUri, result.Result);
+                try
+                {
+                    // Items should be moved directly
+                    _ = await sourceCollection.MoveItemAsync(moveItem, destinationCollection, destinationName, overwrite, cancellationToken).ConfigureAwait(false);
+                }
+                catch (HttpListenerException ex)
+                {
+                    errors.AddResult(subBaseUri, (HttpStatusCode)ex.ErrorCode);
+                }
             }
         }
     }

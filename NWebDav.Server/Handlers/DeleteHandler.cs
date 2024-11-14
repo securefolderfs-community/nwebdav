@@ -109,7 +109,7 @@ namespace NWebDav.Server.Handlers
             }
 
             // Attempt to delete the item
-            return await collection.DeleteItemAsync(name, cancellationToken).ConfigureAwait(false);
+            return await collection.DavDeleteAsync(deleteItem, cancellationToken).ConfigureAwait(false);
         }
     }
 }

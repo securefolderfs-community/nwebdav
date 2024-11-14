@@ -1,5 +1,4 @@
 ﻿using NWebDav.Server.Enums;
-using NWebDav.Server.Extensions;
 using NWebDav.Server.Locking;
 using NWebDav.Server.Props;
 using OwlCore.Storage;
@@ -96,6 +95,138 @@ namespace NWebDav.Server.Stores
 
             // Item not found
             throw new FileNotFoundException($"An item was not found. Name: '{name}'.");
+        }
+
+        /// <inheritdoc/>
+        public virtual async Task<IStoreItem> MoveItemAsync(IStoreItem storeItem, IStoreCollection destinationCollection, string destinationName, bool overwrite, CancellationToken cancellationToken)
+        {
+            // Return error
+            if (!IsWritable)
+                throw new HttpListenerException((int)HttpStatusCode.PreconditionFailed);
+
+            try
+            {
+                // If the destination collection is a directory too, then we can simply move the file
+                if (destinationCollection is DiskStoreCollection destinationDiskStoreCollection)
+                {
+                    // Return error
+                    if (!destinationDiskStoreCollection.IsWritable)
+                        throw new HttpListenerException((int)HttpStatusCode.PreconditionFailed);
+
+                    // Determine source and destination paths
+                    var sourcePath = storeItem.Id;
+                    var destinationPath = Path.Combine(destinationDiskStoreCollection._directoryInfo.FullName, destinationName);
+
+                    // Check if the file already exists
+                    HttpStatusCode result;
+                    if (File.Exists(destinationPath))
+                    {
+                        // Remove the file if it already exists (if allowed)
+                        if (!overwrite)
+                            throw new HttpListenerException((int)HttpStatusCode.Forbidden);
+
+                        // The file will be overwritten
+                        File.Delete(destinationPath);
+                        result = HttpStatusCode.NoContent;
+                    }
+                    else if (Directory.Exists(destinationPath))
+                    {
+                        // Remove the directory if it already exists (if allowed)
+                        if (!overwrite)
+                            throw new HttpListenerException((int)HttpStatusCode.Forbidden);
+
+                        // The file will be overwritten
+                        Directory.Delete(destinationPath, true);
+                        result = HttpStatusCode.NoContent;
+                    }
+                    else
+                    {
+                        // The file will be "created"
+                        result = HttpStatusCode.Created;
+                    }
+
+                    switch (storeItem)
+                    {
+                        case DiskStoreFile:
+                            // Move the file
+                            File.Move(sourcePath, destinationPath);
+                            return new DiskStoreFile(LockingManager, new FileInfo(destinationPath), IsWritable);
+
+                        case DiskStoreCollection:
+                            // Move the directory
+                            Directory.Move(sourcePath, destinationPath);
+                            return new DiskStoreCollection(LockingManager, new DirectoryInfo(destinationPath), IsWritable);
+
+                        default:
+                            // Invalid item
+                            Debug.Fail($"Invalid item {storeItem.GetType()} inside the {nameof(DiskStoreCollection)}.");
+                            throw new HttpListenerException((int)HttpStatusCode.InternalServerError);
+                    }
+                }
+                else
+                {
+                    // Attempt to copy the item to the destination collection
+                    var result = await storeItem.CopyAsync(destinationCollection, destinationName, overwrite, cancellationToken).ConfigureAwait(false);
+                    if (result.Result == HttpStatusCode.Created || result.Result == HttpStatusCode.NoContent)
+                    {
+                        await DeleteAsync(storeItem, cancellationToken).ConfigureAwait(false);
+                        return result.Item!;
+                    }
+                    else
+                    {
+                        throw new HttpListenerException((int)result.Result);
+                    }
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw new HttpListenerException((int)HttpStatusCode.Forbidden);
+            }
+        }
+
+        /// <inheritdoc/>
+        public virtual async Task DeleteAsync(IStoreItem storeItem, CancellationToken cancellationToken)
+        {
+            await Task.CompletedTask;
+
+            // Return error
+            if (!IsWritable)
+                throw new HttpListenerException((int)HttpStatusCode.PreconditionFailed);
+
+            // Determine the full path
+            var fullPath = Path.Combine(_directoryInfo.FullName, storeItem.Name);
+            try
+            {
+                // Check if the file exists
+                if (File.Exists(fullPath))
+                {
+                    // Delete the file
+                    File.Delete(fullPath);
+                    return;
+                }
+
+                // Check if the directory exists
+                if (Directory.Exists(fullPath))
+                {
+                    // Delete the directory
+                    Directory.Delete(fullPath);
+                    return;
+                }
+
+                // Item not found
+                throw new HttpListenerException((int)HttpStatusCode.NotFound);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw new HttpListenerException((int)HttpStatusCode.Forbidden);
+            }
+            catch (Exception)
+            {
+                // Log exception
+                // TODO(wd): Add logging
+                //s_log.Log(LogLevel.Error, () => $"Unable to delete '{fullPath}' directory.", exc);
+                throw new HttpListenerException((int)HttpStatusCode.InternalServerError);
+            }
         }
 
         protected virtual IStoreFile NewFile(string id)
@@ -324,135 +455,6 @@ namespace NWebDav.Server.Stores
         {
             // We can only move disk-store collections
             return destination is DiskStoreCollection;
-        }
-
-        public async Task<StoreItemResult> MoveItemAsync(string sourceName, IStoreCollection destinationCollection, string destinationName, bool overwrite, CancellationToken cancellationToken)
-        {
-            // Return error
-            if (!IsWritable)
-                return new StoreItemResult(HttpStatusCode.PreconditionFailed);
-
-            // Determine the object that is being moved
-            var item = await this.TryGetFirstByNameAsync(sourceName, cancellationToken).ConfigureAwait(false);
-            if (item is null)
-                return new StoreItemResult(HttpStatusCode.NotFound);
-
-            try
-            {
-                // If the destination collection is a directory too, then we can simply move the file
-                if (destinationCollection is DiskStoreCollection destinationDiskStoreCollection)
-                {
-                    // Return error
-                    if (!destinationDiskStoreCollection.IsWritable)
-                        return new StoreItemResult(HttpStatusCode.PreconditionFailed);
-
-                    // Determine source and destination paths
-                    var sourcePath = Path.Combine(_directoryInfo.FullName, sourceName);
-                    var destinationPath = Path.Combine(destinationDiskStoreCollection._directoryInfo.FullName, destinationName);
-
-                    // Check if the file already exists
-                    HttpStatusCode result;
-                    if (File.Exists(destinationPath))
-                    {
-                        // Remove the file if it already exists (if allowed)
-                        if (!overwrite)
-                            return new StoreItemResult(HttpStatusCode.Forbidden);
-
-                        // The file will be overwritten
-                        File.Delete(destinationPath);
-                        result = HttpStatusCode.NoContent;
-                    }
-                    else if (Directory.Exists(destinationPath))
-                    {
-                        // Remove the directory if it already exists (if allowed)
-                        if (!overwrite)
-                            return new StoreItemResult(HttpStatusCode.Forbidden);
-
-                        // The file will be overwritten
-                        Directory.Delete(destinationPath, true);
-                        result = HttpStatusCode.NoContent;
-                    }
-                    else
-                    {
-                        // The file will be "created"
-                        result = HttpStatusCode.Created;
-                    }
-
-                    switch (item)
-                    {
-                        case DiskStoreFile _:
-                            // Move the file
-                            File.Move(sourcePath, destinationPath);
-                            return new StoreItemResult(result, new DiskStoreFile(LockingManager, new FileInfo(destinationPath), IsWritable));
-
-                        case DiskStoreCollection _:
-                            // Move the directory
-                            Directory.Move(sourcePath, destinationPath);
-                            return new StoreItemResult(result, new DiskStoreCollection(LockingManager, new DirectoryInfo(destinationPath), IsWritable));
-
-                        default:
-                            // Invalid item
-                            Debug.Fail($"Invalid item {item.GetType()} inside the {nameof(DiskStoreCollection)}.");
-                            return new StoreItemResult(HttpStatusCode.InternalServerError);
-                    }
-                }
-                else
-                {
-                    // Attempt to copy the item to the destination collection
-                    var result = await item.CopyAsync(destinationCollection, destinationName, overwrite, cancellationToken).ConfigureAwait(false);
-                    if (result.Result == HttpStatusCode.Created || result.Result == HttpStatusCode.NoContent)
-                        await DeleteItemAsync(sourceName, cancellationToken).ConfigureAwait(false);
-
-                    // Return the result
-                    return result;
-                }
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return new StoreItemResult(HttpStatusCode.Forbidden);
-            }
-        }
-
-        public Task<HttpStatusCode> DeleteItemAsync(string name, CancellationToken cancellationToken)
-        {
-            // Return error
-            if (!IsWritable)
-                return Task.FromResult(HttpStatusCode.PreconditionFailed);
-
-            // Determine the full path
-            var fullPath = Path.Combine(_directoryInfo.FullName, name);
-            try
-            {
-                // Check if the file exists
-                if (File.Exists(fullPath))
-                {
-                    // Delete the file
-                    File.Delete(fullPath);
-                    return Task.FromResult(HttpStatusCode.OK);
-                }
-
-                // Check if the directory exists
-                if (Directory.Exists(fullPath))
-                {
-                    // Delete the directory
-                    Directory.Delete(fullPath);
-                    return Task.FromResult(HttpStatusCode.OK);
-                }
-
-                // Item not found
-                return Task.FromResult(HttpStatusCode.NotFound);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Task.FromResult(HttpStatusCode.Forbidden);
-            }
-            catch (Exception exc)
-            {
-                // Log exception
-                // TODO(wd): Add logging
-                //s_log.Log(LogLevel.Error, () => $"Unable to delete '{fullPath}' directory.", exc);
-                return Task.FromResult(HttpStatusCode.InternalServerError);
-            }
         }
 
         public EnumerationDepthMode InfiniteDepthMode => EnumerationDepthMode.Rejected;

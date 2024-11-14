@@ -15,6 +15,12 @@ namespace NWebDav.Server.Stores
         // TODO: IGetFirstByName
         Task<IStoreItem> GetFirstByNameAsync(string name, CancellationToken cancellationToken = default);
 
+        // TODO: ISupportsMove
+        Task<IStoreItem> MoveItemAsync(IStoreItem storeItem, IStoreCollection destination, string destinationName, bool overwrite, CancellationToken cancellationToken = default);
+
+        // TODO: IModifiableFolder
+        Task DeleteAsync(IStoreItem storeItem, CancellationToken cancellationToken = default);
+
 
         // Create items and collections and add to the collection
         Task<StoreItemResult> CreateItemAsync(string name, bool overwrite, CancellationToken cancellationToken);
@@ -22,12 +28,6 @@ namespace NWebDav.Server.Stores
 
         // Checks if the collection can be moved directly to the destination
         bool SupportsFastMove(IStoreCollection destination, string destinationName, bool overwrite);
-
-        // Move items between collections
-        Task<StoreItemResult> MoveItemAsync(string sourceName, IStoreCollection destination, string destinationName, bool overwrite, CancellationToken cancellationToken);
-
-        // Delete items from collection
-        Task<HttpStatusCode> DeleteItemAsync(string name, CancellationToken cancellationToken);
 
         EnumerationDepthMode InfiniteDepthMode { get; }
     }
