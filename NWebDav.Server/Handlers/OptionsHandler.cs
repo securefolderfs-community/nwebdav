@@ -1,8 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
+using NWebDav.Server.Extensions;
 using NWebDav.Server.Helpers;
-using NWebDav.Server.Http;
 using NWebDav.Server.Stores;
-using OwlCore.Storage;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,7 +21,7 @@ namespace NWebDav.Server.Handlers
         /// Handle a OPTIONS request.
         /// </summary>
         /// <inheritdoc/>
-        public Task HandleRequestAsync(IHttpContext context, IStore store, IFolder storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public Task HandleRequestAsync(HttpListenerContext context, IStore store, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain response
             var response = context.Response;

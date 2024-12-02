@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
+using NWebDav.Server.Extensions;
 using NWebDav.Server.Http;
-using SecureFolderFS.Shared.Extensions;
-using SecureFolderFS.Shared.ComponentModel;
 using System;
 using System.Globalization;
 using System.IO;
@@ -33,18 +32,14 @@ namespace NWebDav.Server.Helpers
         /// <remarks>
         /// Not all HTTP infrastructures allow to set the status description, so it should only be used for informational purposes.
         /// </remarks>
-        public static void SetStatus(this IHttpResponse response, HttpStatusCode statusCode, string? statusDescription = null)
+        public static void SetStatus(this HttpListenerResponse response, HttpStatusCode statusCode, string? statusDescription = null)
         {
             // Set the status code and description
             response.StatusCode = (int)statusCode;
-            response.StatusDescription = (statusDescription?.Length ?? 0) == 0 ? statusCode.ToString() : statusDescription;
-        }
 
-        public static void SetStatus(this IHttpResponse response, IResult result)
-        {
-            // Set the status code and description
-            response.StatusCode = (int)HttpStatusCode.Forbidden; // TODO(wd): Set appropriate status based on exception
-            response.StatusDescription = result.GetMessage();
+            // Also set status description
+            if (statusDescription is not null)
+                response.StatusDescription = statusDescription;
         }
 
         /// <summary>
@@ -56,7 +51,7 @@ namespace NWebDav.Server.Helpers
         /// <param name="logger">Used to trace warnings and debugging information.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> that cancels this action.</param>
         /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
-        public static async Task SendResponseAsync(this IHttpResponse response, HttpStatusCode statusCode, XDocument xDocument, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public static async Task SendResponseAsync(this HttpListenerResponse response, HttpStatusCode statusCode, XDocument xDocument, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Make sure an XML document is specified
             if (xDocument == null)

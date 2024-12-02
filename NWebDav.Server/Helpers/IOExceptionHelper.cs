@@ -4,8 +4,8 @@ namespace NWebDav.Server.Helpers
 {
     public static class IOExceptionHelper
     {
-        private const int ErrorHandleDiskFull = 0x27;
         private const int ErrorDiskFull = 0x70;
+        private const int ErrorHandleDiskFull = 0x27;
 
         public static bool IsDiskFull(this IOException ioException)
         {

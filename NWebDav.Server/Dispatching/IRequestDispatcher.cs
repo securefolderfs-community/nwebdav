@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using NWebDav.Server.Http;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -31,6 +31,6 @@ namespace NWebDav.Server.Dispatching
         /// <param name="context">HTTP context for this request.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> that cancels this action.</param>
         /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
-        Task DispatchRequestAsync(IHttpContext context, CancellationToken cancellationToken = default);
+        Task DispatchRequestAsync(HttpListenerContext context, CancellationToken cancellationToken = default);
     }
 }

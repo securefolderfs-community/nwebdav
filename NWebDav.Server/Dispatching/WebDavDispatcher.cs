@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
-using NWebDav.Server.Http;
 using NWebDav.Server.Stores;
 using OwlCore.Storage;
 using System;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,11 +22,11 @@ namespace NWebDav.Server.Dispatching
         }
 
         /// <inheritdoc/>
-        protected override async Task<bool> InvokeRequestAsync(IRequestHandler requestHandler, IHttpContext context, CancellationToken cancellationToken)
+        protected override async Task<bool> InvokeRequestAsync(IRequestHandler requestHandler, HttpListenerContext context, CancellationToken cancellationToken)
         {
             try
             {
-                await requestHandler.HandleRequestAsync(context, _store, _storageRoot, Logger, cancellationToken).ConfigureAwait(false);
+                await requestHandler.HandleRequestAsync(context, _store, Logger, cancellationToken).ConfigureAwait(false);
                 return true;
             }
             catch (NotImplementedException)

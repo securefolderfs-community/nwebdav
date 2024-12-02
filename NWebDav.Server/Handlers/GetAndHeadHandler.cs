@@ -1,9 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
+using NWebDav.Server.Extensions;
 using NWebDav.Server.Helpers;
-using NWebDav.Server.Http;
 using NWebDav.Server.Props;
 using NWebDav.Server.Stores;
-using OwlCore.Storage;
 using System;
 using System.Globalization;
 using System.IO;
@@ -29,7 +28,7 @@ namespace NWebDav.Server.Handlers
         /// Handle a GET or HEAD request.
         /// </summary>
         /// <inheritdoc/>
-        public async Task HandleRequestAsync(IHttpContext context, IStore store, IFolder storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public async Task HandleRequestAsync(HttpListenerContext context, IStore store, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain request and response
             var request = context.Request;
@@ -42,7 +41,7 @@ namespace NWebDav.Server.Handlers
             var range = request.GetRange();
 
             // Obtain the WebDAV collection
-            var entry = await store.GetItemAsync(request.Url, context).ConfigureAwait(false);
+            var entry = await store.GetItemAsync(request.Url, cancellationToken).ConfigureAwait(false);
             if (entry == null)
             {
                 // Set status to not found
@@ -78,8 +77,14 @@ namespace NWebDav.Server.Handlers
                     response.SetHeaderValue("Content-Language", contentLanguage);
             }
 
+            if (entry is not IStoreFile storeFile)
+            {
+                response.SetStatus(HttpStatusCode.NoContent);
+                return;
+            }
+
             // Stream the actual entry
-            using (var stream = await entry.GetReadableStreamAsync(context).ConfigureAwait(false))
+            using (var stream = await storeFile.GetReadableStreamAsync(cancellationToken).ConfigureAwait(false))
             {
                 if (stream != null && stream != Stream.Null)
                 {
@@ -133,7 +138,7 @@ namespace NWebDav.Server.Handlers
                     }
 
                     // Do not return the actual item data if ETag matches
-                    if (etag != null && request.GetHeaderValue("If-None-Match") == etag)
+                    if (etag is not null && request.Headers["If-None-Match"] == etag)
                     {
                         response.SetHeaderValue("Content-Length", "0");
                         response.SetStatus(HttpStatusCode.NotModified);

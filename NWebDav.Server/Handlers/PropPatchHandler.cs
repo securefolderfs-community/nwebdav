@@ -102,14 +102,14 @@ namespace NWebDav.Server.Handlers
         /// Handle a PROPPATCH request.
         /// </summary>
         /// <inheritdoc/>
-        public async Task HandleRequestAsync(IHttpContext context, IStore store, IFolder storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public async Task HandleRequestAsync(HttpListenerContext context, IStore store, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain request and response
             var request = context.Request;
             var response = context.Response;
 
             // Obtain item
-            var item = await store.GetItemAsync(request.Url, context).ConfigureAwait(false);
+            var item = await store.GetItemAsync(request.Url, cancellationToken).ConfigureAwait(false);
             if (item == null)
             {
                 response.SetStatus(HttpStatusCode.NotFound);

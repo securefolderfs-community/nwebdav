@@ -51,7 +51,7 @@ namespace NWebDav.Server.Handlers
         /// Handle a PROPFIND request.
         /// </summary>
         /// <inheritdoc/>
-        public async Task HandleRequestAsync(IHttpContext context, IStore store, IFolder storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public async Task HandleRequestAsync(HttpListenerContext context, IStore store, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain request and response
             var request = context.Request;
@@ -65,7 +65,7 @@ namespace NWebDav.Server.Handlers
             var entries = new List<PropertyEntry>();
 
             // Obtain entry
-            var topEntry = await store.GetItemAsync(request.Url, context).ConfigureAwait(false);
+            var topEntry = await store.GetItemAsync(request.Url, cancellationToken).ConfigureAwait(false);
             if (topEntry == null)
             {
                 response.SetStatus(HttpStatusCode.NotFound);
@@ -98,7 +98,7 @@ namespace NWebDav.Server.Handlers
                 }
 
                 // Add all the entries
-                await AddEntriesAsync(topCollection, depth, context, request.Url, entries).ConfigureAwait(false);
+                await AddEntriesAsync(topCollection, depth, request.Url, entries, cancellationToken).ConfigureAwait(false);
             }
             else
             {
@@ -166,7 +166,7 @@ namespace NWebDav.Server.Handlers
             await response.SendResponseAsync(HttpStatusCode.MultiStatus, xDocument, logger, cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task AddPropertyAsync(IHttpContext context, XElement xResponse, XElement xPropStatValues, IPropertyManager propertyManager, IStoreItem item, XName propertyName, IList<XName> addedProperties, ILogger? logger)
+        private async Task AddPropertyAsync(HttpListenerContext context, XElement xResponse, XElement xPropStatValues, IPropertyManager propertyManager, IStoreItem item, XName propertyName, IList<XName> addedProperties, ILogger? logger)
         {
             if (!addedProperties.Contains(propertyName))
             {
@@ -210,7 +210,7 @@ namespace NWebDav.Server.Handlers
             }
         }
 
-        private static async Task<PropertyMode> GetRequestedPropertiesAsync(IHttpRequest request, ICollection<XName> properties, ILogger? logger, CancellationToken cancellationToken)
+        private static async Task<PropertyMode> GetRequestedPropertiesAsync(HttpListenerRequest request, ICollection<XName> properties, ILogger? logger, CancellationToken cancellationToken)
         {
             // Create an XML document from the stream
             var xDocument = await request.LoadXmlDocumentAsync(logger, cancellationToken).ConfigureAwait(false);
@@ -260,7 +260,7 @@ namespace NWebDav.Server.Handlers
             return propertyMode;
         }
 
-        private async Task AddEntriesAsync(IStoreCollection collection, int depth, IHttpContext context, Uri uri, IList<PropertyEntry> entries)
+        private async Task AddEntriesAsync(IStoreCollection collection, int depth, Uri uri, IList<PropertyEntry> entries, CancellationToken cancellationToken)
         {
             // Add the collection to the list
             entries.Add(new PropertyEntry(uri, collection));
@@ -269,11 +269,11 @@ namespace NWebDav.Server.Handlers
             if (depth > 0)
             {
                 // Add all child collections
-                foreach (var childEntry in await collection.GetItemsAsync(context).ConfigureAwait(false))
+                await foreach (var childEntry in collection.GetItemsAsync(StorableType.All, cancellationToken).ConfigureAwait(false))
                 {
                     var subUri = UriHelper.Combine(uri, childEntry.Name);
                     if (childEntry is IStoreCollection subCollection)
-                        await AddEntriesAsync(subCollection, depth - 1, context, subUri, entries).ConfigureAwait(false);
+                        await AddEntriesAsync(subCollection, depth - 1, subUri, entries, cancellationToken).ConfigureAwait(false);
                     else
                         entries.Add(new PropertyEntry(subUri, childEntry));
                 }
@@ -281,6 +281,3 @@ namespace NWebDav.Server.Handlers
         }
     }
 }
-
-
-

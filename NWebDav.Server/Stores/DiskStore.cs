@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Security;
+using System.Threading;
 using System.Threading.Tasks;
 using NWebDav.Server.Helpers;
 using NWebDav.Server.Http;
@@ -21,7 +23,7 @@ namespace NWebDav.Server.Stores
         public bool IsWritable { get; }
         public ILockingManager LockingManager { get; }
 
-        public virtual Task<IStoreItem> GetItemAsync(Uri uri, IHttpContext context)
+        public virtual Task<IStoreItem?> GetItemAsync(Uri uri, CancellationToken cancellationToken)
         {
             // Determine the path from the uri
             var path = GetPathFromUri(uri);
@@ -32,13 +34,13 @@ namespace NWebDav.Server.Stores
 
             // Check if it's a file
             if (File.Exists(path))
-                return Task.FromResult<IStoreItem>(new DiskStoreItem(LockingManager, new FileInfo(path), IsWritable));
+                return Task.FromResult<IStoreItem>(new DiskStoreFile(LockingManager, new FileInfo(path), IsWritable));
 
             // The item doesn't exist
             return Task.FromResult<IStoreItem>(null);
         }
 
-        public virtual Task<IStoreCollection> GetCollectionAsync(Uri uri, IHttpContext context)
+        public virtual Task<IStoreCollection?> GetCollectionAsync(Uri uri, CancellationToken cancellationToken)
         {
             // Determine the path from the uri
             var path = GetPathFromUri(uri);

@@ -21,12 +21,12 @@ namespace NWebDav.Server.Props
         /// <summary>
         /// Create an instance of the <see cref="DavLockDiscovery{TEntry}"/>
         /// property that implements the property using the
-        /// <see cref="NWebDav.Server.Locking.ILockingManager.GetActiveLockInfo"/> 
+        /// <see cref="NWebDav.Server.Locking.ILockingManager.GetActiveLockInfoAsync"/> 
         /// method of the item's locking manager.
         /// </summary>
         public DavLockDiscoveryDefault()
         {
-            Getter = (context, item) => item.LockingManager.GetActiveLockInfo(item).Select(ali => ali.ToXml());
+            Getter = (context, item) => item.LockingManager.GetActiveLockInfoAsync(item, default).Select(ali => ali.ToXml()).ToArrayAsync().Result;
         }
     }
 

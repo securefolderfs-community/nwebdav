@@ -29,7 +29,7 @@ namespace NWebDav.Server.Props
 
         public IList<PropertyInfo> Properties { get; }
 
-        public Task<object> GetPropertyAsync(IHttpContext context, IStoreItem item, XName propertyName, bool skipExpensive = false)
+        public Task<object> GetPropertyAsync(HttpListenerContext context, IStoreItem item, XName propertyName, bool skipExpensive = false)
         {
             // Find the property
             if (!_properties.TryGetValue(propertyName, out var property))
@@ -47,7 +47,7 @@ namespace NWebDav.Server.Props
             return property.GetterAsync(context, (TEntry)item);
         }
 
-        public Task<HttpStatusCode> SetPropertyAsync(IHttpContext context, IStoreItem item, XName propertyName, object value)
+        public Task<HttpStatusCode> SetPropertyAsync(HttpListenerContext context, IStoreItem item, XName propertyName, object value)
         {
             // Find the property
             if (!_properties.TryGetValue(propertyName, out var property))
