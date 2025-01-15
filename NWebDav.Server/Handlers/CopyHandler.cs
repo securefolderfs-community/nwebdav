@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using NWebDav.Server.Helpers;
-using NWebDav.Server.Http;
 using NWebDav.Server.Stores;
 using OwlCore.Storage;
 using System;
@@ -26,7 +25,7 @@ namespace NWebDav.Server.Handlers
         /// Handle a COPY request.
         /// </summary>
         /// <inheritdoc/>
-        public async Task HandleRequestAsync(IHttpContext context, IStore store, IFolder storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public async Task HandleRequestAsync(HttpListenerContext context, IStore store, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain request and response
             var request = context.Request;
@@ -53,10 +52,10 @@ namespace NWebDav.Server.Handlers
             var overwrite = request.GetOverwrite();
 
             // Split the destination Uri
-            var destination = RequestHelper.SplitUri(destinationUri);
+            var destination = RequestHelpers.SplitUri(destinationUri);
 
             // Obtain the destination collection
-            var destinationCollection = await store.GetCollectionAsync(destination.CollectionUri, context).ConfigureAwait(false);
+            var destinationCollection = await store.GetCollectionAsync(destination.CollectionUri, cancellationToken).ConfigureAwait(false);
             if (destinationCollection == null)
             {
                 // Source not found
@@ -65,7 +64,7 @@ namespace NWebDav.Server.Handlers
             }
 
             // Obtain the source item
-            var sourceItem = await store.GetItemAsync(request.Url, context).ConfigureAwait(false);
+            var sourceItem = await store.GetItemAsync(request.Url, cancellationToken).ConfigureAwait(false);
             if (sourceItem == null)
             {
                 // Source not found
@@ -80,7 +79,7 @@ namespace NWebDav.Server.Handlers
             var errors = new UriResultCollection();
 
             // Copy collection
-            await CopyAsync(sourceItem, destinationCollection, destination.Name, overwrite, depth, context, destination.CollectionUri, errors).ConfigureAwait(false);
+            await CopyAsync(sourceItem, destinationCollection, destination.Name, overwrite, depth, cancellationToken, destination.CollectionUri, errors).ConfigureAwait(false);
 
             // Check if there are any errors
             if (errors.HasItems)
@@ -98,13 +97,13 @@ namespace NWebDav.Server.Handlers
             }
         }
 
-        private async Task CopyAsync(IStoreItem source, IStoreCollection destinationCollection, string name, bool overwrite, int depth, IHttpContext context, Uri baseUri, UriResultCollection errors)
+        private async Task CopyAsync(IStoreItem source, IStoreCollection destinationCollection, string name, bool overwrite, int depth, CancellationToken cancellationToken, Uri baseUri, UriResultCollection errors)
         {
             // Determine the new base Uri
             var newBaseUri = UriHelper.Combine(baseUri, name);
 
             // Copy the item
-            var copyResult = await source.CopyAsync(destinationCollection, name, overwrite, context).ConfigureAwait(false);
+            var copyResult = await source.CopyAsync(destinationCollection, name, overwrite, cancellationToken).ConfigureAwait(false);
             if (copyResult.Result != HttpStatusCode.Created && copyResult.Result != HttpStatusCode.NoContent)
             {
                 errors.AddResult(newBaseUri, copyResult.Result);
@@ -119,8 +118,8 @@ namespace NWebDav.Server.Handlers
                 var newCollection = (IStoreCollection)copyResult.Item;
 
                 // Copy all childs of the source collection
-                foreach (var entry in await sourceCollection.GetItemsAsync(context).ConfigureAwait(false))
-                    await CopyAsync(entry, newCollection, entry.Name, overwrite, depth - 1, context, newBaseUri, errors).ConfigureAwait(false);
+                await foreach (var entry in sourceCollection.GetItemsAsync(StorableType.All, cancellationToken).ConfigureAwait(false))
+                    await CopyAsync(entry, newCollection, entry.Name, overwrite, depth - 1, cancellationToken, newBaseUri, errors).ConfigureAwait(false);
             }
         }
     }

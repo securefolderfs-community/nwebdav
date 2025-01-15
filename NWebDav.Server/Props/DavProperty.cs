@@ -38,14 +38,14 @@ namespace NWebDav.Server.Props
         /// to deal with compatibility of certain WebDAV clients (can be
         /// determined using the user agent).
         /// </remarks>
-        public Func<IHttpContext, TEntry, Task<object>> GetterAsync { get; set; }
+        public Func<HttpListenerContext, TEntry, Task<object>> GetterAsync { get; set; }
 
         /// <summary>
         /// Gets or sets the delegate that is responsible to set the property
         /// value of a store item/collection.
         /// </summary>
         /// <returns>Delegate to set the property value.</returns>
-        public Func<IHttpContext, TEntry, object, Task<HttpStatusCode>> SetterAsync { get; set; }
+        public Func<HttpListenerContext, TEntry, object, Task<HttpStatusCode>> SetterAsync { get; set; }
 
         /// <summary>
         /// Gets or sets the flag whether the property is expensive.

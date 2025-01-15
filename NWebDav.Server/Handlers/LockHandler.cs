@@ -1,9 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
+using NWebDav.Server.Extensions;
 using NWebDav.Server.Helpers;
-using NWebDav.Server.Http;
 using NWebDav.Server.Locking;
 using NWebDav.Server.Stores;
-using OwlCore.Storage;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -29,7 +28,7 @@ namespace NWebDav.Server.Handlers
         /// Handle a LOCK request.
         /// </summary>
         /// <inheritdoc/>
-        public async Task HandleRequestAsync(IHttpContext context, IStore store, IFolder storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public async Task HandleRequestAsync(HttpListenerContext context, IStore store, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain request and response
             var request = context.Request;
@@ -40,7 +39,7 @@ namespace NWebDav.Server.Handlers
             var timeouts = request.GetTimeouts();
 
             // Obtain the WebDAV item
-            var item = await store.GetItemAsync(request.Url, context).ConfigureAwait(false);
+            var item = await store.GetItemAsync(request.Url, cancellationToken).ConfigureAwait(false);
             if (item == null)
             {
                 // Set status to not found
@@ -64,7 +63,7 @@ namespace NWebDav.Server.Handlers
             if (refreshLockToken != null)
             {
                 // Obtain the token
-                lockResult = lockingManager.RefreshLock(item, depth > 0, timeouts, refreshLockToken);
+                lockResult = await lockingManager.RefreshLockAsync(item, depth > 0, timeouts, refreshLockToken, cancellationToken);
             }
             else
             {
@@ -120,7 +119,7 @@ namespace NWebDav.Server.Handlers
                 }
 
                 // Perform the lock
-                lockResult = lockingManager.Lock(item, lockType, lockScope, owner, request.Url, depth > 0, timeouts);
+                lockResult = await lockingManager.LockAsync(item, lockType, lockScope, owner, request.Url, depth > 0, timeouts, cancellationToken);
             }
 
             // Check if result is fine

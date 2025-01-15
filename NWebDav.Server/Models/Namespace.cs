@@ -1,4 +1,4 @@
-﻿namespace NWebDav.Server.Helpers
+﻿namespace NWebDav.Server.ComponentModel
 {
     /// <summary>
     /// This namespace defines all the helper classes to implement the NWebDAV

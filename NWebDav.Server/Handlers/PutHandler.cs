@@ -25,17 +25,17 @@ namespace NWebDav.Server.Handlers
         /// Handle a PUT request.
         /// </summary>
         /// <inheritdoc/>
-        public async Task HandleRequestAsync(IHttpContext context, IStore store, IFolder storageRoot, ILogger? logger = null, CancellationToken cancellationToken = default)
+        public async Task HandleRequestAsync(HttpListenerContext context, IStore store, ILogger? logger = null, CancellationToken cancellationToken = default)
         {
             // Obtain request and response
             var request = context.Request;
             var response = context.Response;
 
             // It's not a collection, so we'll try again by fetching the item in the parent collection
-            var splitUri = RequestHelper.SplitUri(request.Url);
+            var splitUri = RequestHelpers.SplitUri(request.Url);
 
             // Obtain collection
-            var collection = await store.GetCollectionAsync(splitUri.CollectionUri, context).ConfigureAwait(false);
+            var collection = await store.GetCollectionAsync(splitUri.CollectionUri, cancellationToken).ConfigureAwait(false);
             if (collection == null)
             {
                 // Source not found
@@ -44,14 +44,21 @@ namespace NWebDav.Server.Handlers
             }
 
             // Obtain the item
-            var result = await collection.CreateItemAsync(splitUri.Name, true, context).ConfigureAwait(false);
+            var result = await collection.CreateItemAsync(splitUri.Name, true, cancellationToken).ConfigureAwait(false);
             var status = result.Result;
             if (status == HttpStatusCode.Created || status == HttpStatusCode.NoContent)
             {
-                // Upload the information to the item
-                var uploadStatus = await result.Item.UploadFromStreamAsync(context, request.InputStream ?? Stream.Null).ConfigureAwait(false);
-                if (uploadStatus != HttpStatusCode.OK)
-                    status = uploadStatus;
+                if (result.Item is IStoreFile storeFile)
+                {
+                    // Upload the information to the item
+                    var uploadStatus = await storeFile.UploadFromStreamAsync(request.InputStream ?? Stream.Null, cancellationToken).ConfigureAwait(false);
+                    if (uploadStatus != HttpStatusCode.OK)
+                        status = uploadStatus;
+                }
+                else
+                {
+                    status = HttpStatusCode.Conflict;
+                }
             }
 
             // Finished writing

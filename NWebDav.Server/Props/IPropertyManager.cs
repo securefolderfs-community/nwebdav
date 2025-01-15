@@ -40,7 +40,7 @@ namespace NWebDav.Server.Props
         /// <paramref name="skipExpensive"/> is set to <see langword="true"/>
         /// and the parameter is expensive to compute.
         /// </returns>
-        Task<object> GetPropertyAsync(IHttpContext context, IStoreItem item, XName propertyName, bool skipExpensive = false);
+        Task<object> GetPropertyAsync(HttpListenerContext context, IStoreItem item, XName propertyName, bool skipExpensive = false);
 
         /// <summary>
         /// Set the value of the specified property for the given item.
@@ -61,6 +61,6 @@ namespace NWebDav.Server.Props
         /// A task that represents the set property operation. The task will
         /// return the WebDAV status code of the set operation upon completion.
         /// </returns>
-        Task<HttpStatusCode> SetPropertyAsync(IHttpContext context, IStoreItem item, XName propertyName, object value);
+        Task<HttpStatusCode> SetPropertyAsync(HttpListenerContext context, IStoreItem item, XName propertyName, object value);
     }
 }
