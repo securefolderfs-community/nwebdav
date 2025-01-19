@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using NWebDav.Server.Stores;
-using OwlCore.Storage;
 using System;
 using System.Net;
 using System.Threading;
@@ -12,13 +11,11 @@ namespace NWebDav.Server.Dispatching
     public sealed class WebDavDispatcher : BaseDispatcher
     {
         private readonly IStore _store;
-        private readonly IFolder _storageRoot;
 
-        public WebDavDispatcher(IStore store, IFolder storageRoot, IRequestHandlerProvider requestHandlerFactory, ILogger? logger)
+        public WebDavDispatcher(IStore store, IRequestHandlerProvider requestHandlerFactory, ILogger? logger)
             : base(requestHandlerFactory, logger)
         {
             _store = store;
-            _storageRoot = storageRoot;
         }
 
         /// <inheritdoc/>
