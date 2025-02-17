@@ -22,7 +22,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
     <PackageReference Include="Microsoft.Net.Http.Headers" Version="8.0.8" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
-    <PackageReference Include="OwlCore.Storage" Version="0.12.1" />
+    <PackageReference Include="OwlCore.Storage" Version="0.12.2" />
   </ItemGroup>
 
   <ItemGroup>
