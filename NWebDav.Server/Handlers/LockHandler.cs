@@ -33,7 +33,7 @@ namespace NWebDav.Server.Handlers
             // Obtain request and response
             var request = context.Request;
             var response = context.Response;
-            
+
             // Determine the depth and requested timeout(s)
             var depth = request.GetDepth();
             var timeouts = request.GetTimeouts();

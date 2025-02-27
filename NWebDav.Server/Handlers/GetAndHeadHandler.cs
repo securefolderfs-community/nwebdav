@@ -165,7 +165,7 @@ namespace NWebDav.Server.Handlers
                 // We prefer seeking instead of draining data
                 if (!src.CanSeek)
                     throw new IOException("Cannot use range, because the source stream isn't seekable");
-                
+
                 src.Seek(start, SeekOrigin.Begin);
             }
 
@@ -185,7 +185,7 @@ namespace NWebDav.Server.Handlers
                 // We're done, if we cannot read any data anymore
                 if (bytesRead == 0)
                     return;
-                
+
                 // Write the data to the destination stream
                 await dest.WriteAsync(buffer, 0, bytesRead, cancellationToken).ConfigureAwait(false);
 

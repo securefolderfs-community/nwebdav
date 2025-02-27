@@ -25,7 +25,7 @@ namespace NWebDav.Server.Stores
         {
             if (!uri.LocalPath.StartsWith($"/{_remoteRootDirectory}"))
                 return Task.FromResult<IStoreItem>(null);
-            
+
             return _root.GetItemAsync(UriHelper.RemoveRootDirectory(uri, _remoteRootDirectory), cancellationToken);
         }
 
@@ -33,7 +33,7 @@ namespace NWebDav.Server.Stores
         {
             if (!uri.LocalPath.StartsWith($"/{_remoteRootDirectory}"))
                 return Task.FromResult<IStoreCollection>(null);
-            
+
             return _root.GetCollectionAsync(UriHelper.RemoveRootDirectory(uri, _remoteRootDirectory), cancellationToken);
         }
     }

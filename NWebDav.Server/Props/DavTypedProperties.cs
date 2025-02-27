@@ -53,7 +53,7 @@ namespace NWebDav.Server.Props
             /// compatible with the requesting WebDAV client.
             /// </remarks>
             object ToXml(HttpListenerContext context, TType value);
-            
+
             /// <summary>
             /// Get the typed value of the specified XML representation.
             /// </summary>
