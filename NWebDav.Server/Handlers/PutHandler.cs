@@ -50,10 +50,20 @@ namespace NWebDav.Server.Handlers
             {
                 if (result.Item is IStoreFile storeFile)
                 {
-                    // Upload the information to the item
-                    var uploadStatus = await storeFile.UploadFromStreamAsync(request.InputStream ?? Stream.Null, cancellationToken).ConfigureAwait(false);
-                    if (uploadStatus != HttpStatusCode.OK)
-                        status = uploadStatus;
+                    if (context.Request.Headers["Transfer-Encoding"]?.ToLowerInvariant() != "chunked")
+                    {
+                        if (request.InputStream != Stream.Null)
+                        {
+                            // Upload the information to the item
+                            status = await storeFile.UploadFromStreamAsync(request.InputStream ?? Stream.Null, cancellationToken).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            status = HttpStatusCode.OK;
+                        }
+                    }
+                    else
+                        status = HttpStatusCode.LengthRequired;
                 }
                 else
                 {

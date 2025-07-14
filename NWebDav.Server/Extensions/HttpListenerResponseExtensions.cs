@@ -1,7 +1,4 @@
-﻿using Microsoft.Net.Http.Headers;
-using System;
-using System.Globalization;
-using System.Net;
+﻿using System.Net;
 
 namespace NWebDav.Server.Extensions
 {
