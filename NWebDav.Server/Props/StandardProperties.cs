@@ -63,8 +63,8 @@ namespace NWebDav.Server.Props
     /// </summary>
     /// <remarks>
     /// The getcontentlanguage property must be defined on any DAV compliant
-    /// resource that returns the Content-Language header on a GET. The 
-    /// format of a language-tag is defined in 
+    /// resource that returns the Content-Language header on a GET. The
+    /// format of a language-tag is defined in
     /// <see href="http://tools.ietf.org/html/rfc2068#section-14.13">section 14.13 of RFC 2068</see>.
     /// </remarks>
     /// <typeparam name="TEntry">
@@ -189,7 +189,7 @@ namespace NWebDav.Server.Props
         /// </summary>
         // ReSharper disable once StaticMemberInGenericType
         public static readonly XName PropertyName = WebDavNamespaces.DavNs + "getlastmodified";
-     
+
         /// <summary>
         /// Name of the property.
         /// </summary>
@@ -260,7 +260,7 @@ namespace NWebDav.Server.Props
     /// destination exists, this specification asserts no policy on ordering.
     /// </para>
     /// <para>
-    /// See 
+    /// See
     /// <see href="http://www.webdav.org/specs/rfc2518.html#rfc.section.13.10">section 13.10 of RFC 2418</see>
     /// for more information and an example of a source result.
     /// </para>
@@ -294,7 +294,7 @@ namespace NWebDav.Server.Props
     /// client is not authorized to see.
     /// </para>
     /// <para>
-    /// See 
+    /// See
     /// <see href="http://www.webdav.org/specs/rfc2518.html#rfc.section.13.11.1">section 13.11 of RFC 2418</see>
     /// for more information and an example of a source result.
     /// </para>

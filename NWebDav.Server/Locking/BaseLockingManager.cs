@@ -74,7 +74,7 @@ namespace NWebDav.Server.Locking
         protected abstract LockResult RefreshLock(IStoreItem item, bool recursiveLock, IEnumerable<int> timeouts, Uri lockTokenUri);
 
         protected abstract bool IsLocked(IStoreItem item);
-     
+
         protected abstract bool HasLock(IStoreItem item, Uri lockToken);
     }
 }
