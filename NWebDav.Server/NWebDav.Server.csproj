@@ -26,8 +26,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Sdk\SecureFolderFS.Shared\SecureFolderFS.Shared.csproj" />
-    <ProjectReference Include="..\..\..\src\Sdk\SecureFolderFS.Storage\SecureFolderFS.Storage.csproj" />
+    <ProjectReference Include="..\..\..\src\Shared\SecureFolderFS.Shared\SecureFolderFS.Shared.csproj" />
+    <ProjectReference Include="..\..\..\src\Shared\SecureFolderFS.Storage\SecureFolderFS.Storage.csproj" />
   </ItemGroup>
 
 </Project>
