@@ -27,7 +27,7 @@ namespace NWebDav.Server.Props
         /// </summary>
         public DavLockDiscoveryDefault()
         {
-            Getter = (context, item) => item.LockingManager.GetActiveLockInfoAsync(item, default).Select(ali => ali.ToXml()).ToArrayAsyncImpl().Result;
+            Getter = (context, item) => item.LockingManager.GetActiveLockInfoAsync(item, default).SelectAsyncImpl(ali => ali.ToXml()).ToArrayAsyncImpl().Result;
         }
     }
 
