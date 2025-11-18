@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 
 using NWebDav.Server.Stores;
+using SecureFolderFS.Shared.Extensions;
 
 namespace NWebDav.Server.Props
 {
@@ -21,12 +22,12 @@ namespace NWebDav.Server.Props
         /// <summary>
         /// Create an instance of the <see cref="DavLockDiscovery{TEntry}"/>
         /// property that implements the property using the
-        /// <see cref="NWebDav.Server.Locking.ILockingManager.GetActiveLockInfoAsync"/> 
+        /// <see cref="NWebDav.Server.Locking.ILockingManager.GetActiveLockInfoAsync"/>
         /// method of the item's locking manager.
         /// </summary>
         public DavLockDiscoveryDefault()
         {
-            Getter = (context, item) => item.LockingManager.GetActiveLockInfoAsync(item, default).Select(ali => ali.ToXml()).ToArrayAsync().Result;
+            Getter = (context, item) => item.LockingManager.GetActiveLockInfoAsync(item, default).Select(ali => ali.ToXml()).ToArrayAsyncImpl().Result;
         }
     }
 
