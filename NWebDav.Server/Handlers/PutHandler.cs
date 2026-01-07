@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Threading;
@@ -43,8 +44,9 @@ namespace NWebDav.Server.Handlers
                 return;
             }
 
-            // Obtain the item
-            var result = await collection.CreateItemAsync(splitUri.Name, true, cancellationToken).ConfigureAwait(false);
+            // Obtain the item - decode URL-encoded characters
+            var decodedName = Uri.UnescapeDataString(splitUri.Name);
+            var result = await collection.CreateItemAsync(decodedName, true, cancellationToken).ConfigureAwait(false);
             var status = result.Result;
             if (status is HttpStatusCode.Created or HttpStatusCode.NoContent)
             {
