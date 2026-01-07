@@ -1,12 +1,12 @@
-﻿using Microsoft.Extensions.Logging;
-using NWebDav.Server.Helpers;
-using NWebDav.Server.Http;
-using NWebDav.Server.Stores;
-using OwlCore.Storage;
-using System.IO;
+﻿using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using NWebDav.Server.Helpers;
+using NWebDav.Server.Storage;
+using NWebDav.Server.Stores;
 
 namespace NWebDav.Server.Handlers
 {
@@ -46,24 +46,35 @@ namespace NWebDav.Server.Handlers
             // Obtain the item
             var result = await collection.CreateItemAsync(splitUri.Name, true, cancellationToken).ConfigureAwait(false);
             var status = result.Result;
-            if (status == HttpStatusCode.Created || status == HttpStatusCode.NoContent)
+            if (status is HttpStatusCode.Created or HttpStatusCode.NoContent)
             {
                 if (result.Item is IStoreFile storeFile)
                 {
-                    if (context.Request.Headers["Transfer-Encoding"]?.ToLowerInvariant() != "chunked")
+                    // Check if there's content to upload
+                    // macOS Finder uses chunked transfer encoding with X-Expected-Entity-Length header
+                    // Content-Length will be -1 for chunked, but we can still read the stream
+                    var isChunked = request.Headers["Transfer-Encoding"]?.ToLowerInvariant() == "chunked";
+                    var hasExpectedLength = long.TryParse(request.Headers["X-Expected-Entity-Length"], out var expectedLength);
+                    var hasContent = request.ContentLength64 > 0 || isChunked || hasExpectedLength;
+
+                    if (hasContent && request.InputStream != Stream.Null)
                     {
-                        if (request.InputStream != Stream.Null)
-                        {
-                            // Upload the information to the item
-                            status = await storeFile.UploadFromStreamAsync(request.InputStream ?? Stream.Null, cancellationToken).ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            status = HttpStatusCode.OK;
-                        }
+                        // Get the appropriate stream based on Content-Encoding header
+                        var inputStream = GetDecodedStream(request);
+
+                        // For chunked transfers on macOS, wrap with a length-limited stream
+                        // This works around an issue where HttpListener's ChunkedInputStream doesn't properly signal EOF
+                        if (isChunked && hasExpectedLength && expectedLength > 0)
+                            inputStream = new LengthLimitedStream(inputStream, expectedLength);
+
+                        // Upload the information to the item
+                        status = await storeFile.UploadFromStreamAsync(inputStream, cancellationToken).ConfigureAwait(false);
                     }
                     else
-                        status = HttpStatusCode.LengthRequired;
+                    {
+                        // No content - empty file or just creating the file
+                        status = HttpStatusCode.OK;
+                    }
                 }
                 else
                 {
@@ -73,6 +84,21 @@ namespace NWebDav.Server.Handlers
 
             // Finished writing
             response.SetStatus(status);
+        }
+
+        /// <summary>
+        /// Gets the input stream, decompressing if necessary based on Content-Encoding header.
+        /// </summary>
+        private static Stream GetDecodedStream(HttpListenerRequest request)
+        {
+            var contentEncoding = request.Headers["Content-Encoding"]?.ToLowerInvariant();
+            return contentEncoding switch
+            {
+                "gzip" => new GZipStream(request.InputStream, CompressionMode.Decompress, leaveOpen: false),
+                "deflate" => new DeflateStream(request.InputStream, CompressionMode.Decompress, leaveOpen: false),
+                "br" => new BrotliStream(request.InputStream, CompressionMode.Decompress, leaveOpen: false),
+                _ => request.InputStream
+            };
         }
     }
 }
