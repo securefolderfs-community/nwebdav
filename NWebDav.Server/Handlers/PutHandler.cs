@@ -70,7 +70,21 @@ namespace NWebDav.Server.Handlers
                             inputStream = new LengthLimitedStream(inputStream, expectedLength);
 
                         // Upload the information to the item
-                        status = await storeFile.UploadFromStreamAsync(inputStream, cancellationToken).ConfigureAwait(false);
+                        try
+                        {
+                            await using var outputStream = await storeFile.OpenStreamAsync(FileAccess.Write, cancellationToken).ConfigureAwait(false);
+                            await inputStream.CopyToAsync(outputStream, cancellationToken).ConfigureAwait(false);
+                            await outputStream.FlushAsync(cancellationToken).ConfigureAwait(false);
+                            status = HttpStatusCode.OK;
+                        }
+                        catch (IOException ioException) when (ioException.IsDiskFull())
+                        {
+                            status = HttpStatusCode.InsufficientStorage;
+                        }
+                        catch (UnauthorizedAccessException)
+                        {
+                            status = HttpStatusCode.Forbidden;
+                        }
                     }
                     else
                     {

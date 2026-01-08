@@ -6,6 +6,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
@@ -153,27 +154,6 @@ namespace NWebDav.Server.Stores
 
         public bool IsWritable { get; }
 
-        public async Task<HttpStatusCode> UploadFromStreamAsync(Stream inputStream, CancellationToken cancellationToken)
-        {
-            // Check if the item is writable
-            if (!IsWritable)
-                return HttpStatusCode.Conflict;
-
-            // Copy the stream
-            try
-            {
-                // Copy the information to the destination stream
-                using (var outputStream = _fileInfo.OpenWrite())
-                {
-                    await inputStream.CopyToAsync(outputStream).ConfigureAwait(false);
-                }
-                return HttpStatusCode.OK;
-            }
-            catch (IOException ioException) when (ioException.IsDiskFull())
-            {
-                return HttpStatusCode.InsufficientStorage;
-            }
-        }
 
         public IPropertyManager PropertyManager => DefaultPropertyManager;
         public ILockingManager LockingManager { get; }
@@ -213,11 +193,20 @@ namespace NWebDav.Server.Stores
                     {
                         if (result.Item is IStoreFile storeFile)
                         {
-                            using (var sourceStream = await OpenStreamAsync(FileAccess.Read, cancellationToken).ConfigureAwait(false))
+                            try
                             {
-                                var copyResult = await storeFile.UploadFromStreamAsync(sourceStream, cancellationToken).ConfigureAwait(false);
-                                if (copyResult != HttpStatusCode.OK)
-                                    return new StoreItemResult(copyResult, result.Item);
+                                await using var sourceStream = await OpenStreamAsync(FileAccess.Read, cancellationToken).ConfigureAwait(false);
+                                await using var destinationStream = await storeFile.OpenStreamAsync(FileAccess.Write, cancellationToken).ConfigureAwait(false);
+                                await sourceStream.CopyToAsync(destinationStream, cancellationToken).ConfigureAwait(false);
+                                await destinationStream.FlushAsync(cancellationToken).ConfigureAwait(false);
+                            }
+                            catch (IOException ioException) when (ioException.IsDiskFull())
+                            {
+                                return new StoreItemResult(HttpStatusCode.InsufficientStorage, result.Item);
+                            }
+                            catch (UnauthorizedAccessException)
+                            {
+                                return new StoreItemResult(HttpStatusCode.Forbidden, result.Item);
                             }
                         }
                         else
