@@ -125,19 +125,23 @@ namespace NWebDav.Server.Handlers
             var subBaseUri = UriHelper.Combine(baseUri, destinationName);
 
             // Obtain the actual item
-            if (moveItem is IStoreCollection moveCollection && !moveCollection.SupportsFastMove_Dav(destinationCollection, destinationName, overwrite))
+            if (moveItem is IStoreCollection moveCollection && !moveCollection.SupportsFastMove(destinationCollection, destinationName, overwrite))
             {
                 // Create a new collection
-                var newCollectionResult = await destinationCollection.CreateCollectionAsync_Dav(destinationName, overwrite, cancellationToken).ConfigureAwait(false);
-                if (newCollectionResult.Result != HttpStatusCode.Created && newCollectionResult.Result != HttpStatusCode.NoContent)
+                IStoreCollection? newCollection = null;
+                try
                 {
-                    errors.AddResult(subBaseUri, newCollectionResult.Result);
+                    newCollection = (IStoreCollection)await destinationCollection.CreateFolderAsync(destinationName, overwrite, cancellationToken).ConfigureAwait(false);
+                }
+                catch (HttpListenerException ex)
+                {
+                    errors.AddResult(subBaseUri, (HttpStatusCode)ex.ErrorCode);
                     return;
                 }
 
                 // Move all sub items
                 await foreach (var entry in moveCollection.GetItemsAsync(StorableType.All, cancellationToken).ConfigureAwait(false))
-                    await MoveAsync(moveCollection, (IStoreItem)entry, newCollectionResult.Collection, ((IStoreItem)entry).Name, overwrite, subBaseUri, errors, cancellationToken).ConfigureAwait(false);
+                    await MoveAsync(moveCollection, (IStoreItem)entry, newCollection, ((IStoreItem)entry).Name, overwrite, subBaseUri, errors, cancellationToken).ConfigureAwait(false);
 
                 // Delete the source collection
                 try

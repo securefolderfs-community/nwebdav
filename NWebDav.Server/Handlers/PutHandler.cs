@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
@@ -46,12 +46,21 @@ namespace NWebDav.Server.Handlers
 
             // Obtain the item - decode URL-encoded characters
             var decodedName = Uri.UnescapeDataString(splitUri.Name);
-            var result = await collection.CreateItemAsync_Dav(decodedName, true, cancellationToken).ConfigureAwait(false);
-            var status = result.Result;
-            if (status is HttpStatusCode.Created or HttpStatusCode.NoContent)
+
+            IStoreFile? storeFile = null;
+            var status = HttpStatusCode.Created;
+
+            try
             {
-                if (result.Item is IStoreFile storeFile)
-                {
+                storeFile = (IStoreFile)await collection.CreateFileAsync(decodedName, true, cancellationToken).ConfigureAwait(false);
+            }
+            catch (HttpListenerException ex)
+            {
+                status = (HttpStatusCode)ex.ErrorCode;
+            }
+
+            if (storeFile != null)
+            {
                     // Check if there's content to upload
                     // macOS Finder uses chunked transfer encoding with X-Expected-Entity-Length header
                     // Content-Length will be -1 for chunked, but we can still read the stream
@@ -91,11 +100,6 @@ namespace NWebDav.Server.Handlers
                         // No content - empty file or just creating the file
                         status = HttpStatusCode.OK;
                     }
-                }
-                else
-                {
-                    status = HttpStatusCode.Conflict;
-                }
             }
 
             // Finished writing

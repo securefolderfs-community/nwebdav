@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -184,37 +184,35 @@ namespace NWebDav.Server.Stores
                 else
                 {
                     // Create the item in the destination collection
-                    var result = await destination.CreateItemAsync_Dav(name, overwrite, cancellationToken).ConfigureAwait(false);
-
-                    // Check if the item could be created
-                    if (result.Item != null)
+                    IStoreFile storeFile;
+                    try
                     {
-                        if (result.Item is IStoreFile storeFile)
-                        {
-                            try
-                            {
-                                await using var sourceStream = await OpenStreamAsync(FileAccess.Read, cancellationToken).ConfigureAwait(false);
-                                await using var destinationStream = await storeFile.OpenStreamAsync(FileAccess.Write, cancellationToken).ConfigureAwait(false);
-                                await sourceStream.CopyToAsync(destinationStream, cancellationToken).ConfigureAwait(false);
-                                await destinationStream.FlushAsync(cancellationToken).ConfigureAwait(false);
-                            }
-                            catch (IOException ioException) when (ioException.IsDiskFull())
-                            {
-                                return new StoreItemResult(HttpStatusCode.InsufficientStorage, result.Item);
-                            }
-                            catch (UnauthorizedAccessException)
-                            {
-                                return new StoreItemResult(HttpStatusCode.Forbidden, result.Item);
-                            }
-                        }
-                        else
-                        {
-                            return new(HttpStatusCode.Conflict, result.Item);
-                        }
+                        storeFile = (IStoreFile)await destination.CreateFileAsync(name, overwrite, cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (HttpListenerException ex)
+                    {
+                        return new StoreItemResult((HttpStatusCode)ex.ErrorCode);
+                    }
+
+                    // Copy the file content
+                    try
+                    {
+                        await using var sourceStream = await OpenStreamAsync(FileAccess.Read, cancellationToken).ConfigureAwait(false);
+                        await using var destinationStream = await storeFile.OpenStreamAsync(FileAccess.Write, cancellationToken).ConfigureAwait(false);
+                        await sourceStream.CopyToAsync(destinationStream, cancellationToken).ConfigureAwait(false);
+                        await destinationStream.FlushAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (IOException ioException) when (ioException.IsDiskFull())
+                    {
+                        return new StoreItemResult(HttpStatusCode.InsufficientStorage, storeFile);
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        return new StoreItemResult(HttpStatusCode.Forbidden, storeFile);
                     }
 
                     // Return result
-                    return new StoreItemResult(result.Result, result.Item);
+                    return new StoreItemResult(HttpStatusCode.Created, storeFile);
                 }
             }
             catch (Exception exc)

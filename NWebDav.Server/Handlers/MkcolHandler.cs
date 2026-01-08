@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+﻿﻿using Microsoft.Extensions.Logging;
 using NWebDav.Server.Helpers;
 using NWebDav.Server.Http;
 using NWebDav.Server.Stores;
@@ -43,10 +43,19 @@ namespace NWebDav.Server.Handlers
             }
 
             // Create the collection
-            var result = await collection.CreateCollectionAsync_Dav(splitUri.Name, false, cancellationToken).ConfigureAwait(false);
+            HttpStatusCode status;
+            try
+            {
+                await collection.CreateFolderAsync(splitUri.Name, false, cancellationToken).ConfigureAwait(false);
+                status = HttpStatusCode.Created;
+            }
+            catch (HttpListenerException ex)
+            {
+                status = (HttpStatusCode)ex.ErrorCode;
+            }
 
             // Finished
-            response.SetStatus(result.Result);
+            response.SetStatus(status);
             return;
         }
     }
