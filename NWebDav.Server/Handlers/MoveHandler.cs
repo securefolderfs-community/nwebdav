@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+﻿﻿using Microsoft.Extensions.Logging;
 using NWebDav.Server.Extensions;
 using NWebDav.Server.Helpers;
 using NWebDav.Server.Stores;
@@ -124,10 +124,10 @@ namespace NWebDav.Server.Handlers
             var subBaseUri = UriHelper.Combine(baseUri, destinationName);
 
             // Obtain the actual item
-            if (moveItem is IStoreCollection moveCollection && !moveCollection.SupportsFastMove(destinationCollection, destinationName, overwrite))
+            if (moveItem is IStoreCollection moveCollection && !moveCollection.SupportsFastMove_Dav(destinationCollection, destinationName, overwrite))
             {
                 // Create a new collection
-                var newCollectionResult = await destinationCollection.CreateCollectionAsync(destinationName, overwrite, cancellationToken).ConfigureAwait(false);
+                var newCollectionResult = await destinationCollection.CreateCollectionAsync_Dav(destinationName, overwrite, cancellationToken).ConfigureAwait(false);
                 if (newCollectionResult.Result != HttpStatusCode.Created && newCollectionResult.Result != HttpStatusCode.NoContent)
                 {
                     errors.AddResult(subBaseUri, newCollectionResult.Result);
@@ -136,7 +136,7 @@ namespace NWebDav.Server.Handlers
 
                 // Move all sub items
                 await foreach (var entry in moveCollection.GetItemsAsync(StorableType.All, cancellationToken).ConfigureAwait(false))
-                    await MoveAsync(moveCollection, entry, newCollectionResult.Collection, entry.Name, overwrite, subBaseUri, errors, cancellationToken).ConfigureAwait(false);
+                    await MoveAsync(moveCollection, (IStoreItem)entry, newCollectionResult.Collection, ((IStoreItem)entry).Name, overwrite, subBaseUri, errors, cancellationToken).ConfigureAwait(false);
 
                 // Delete the source collection
                 var deleteResult = await sourceCollection.DavDeleteAsync(moveItem, cancellationToken).ConfigureAwait(false);
@@ -148,7 +148,7 @@ namespace NWebDav.Server.Handlers
                 try
                 {
                     // Items should be moved directly
-                    _ = await sourceCollection.MoveItemAsync(moveItem, destinationCollection, destinationName, overwrite, cancellationToken).ConfigureAwait(false);
+                    _ = await sourceCollection.MoveItemAsync_Dav(moveItem, destinationCollection, destinationName, overwrite, cancellationToken).ConfigureAwait(false);
                 }
                 catch (HttpListenerException ex)
                 {

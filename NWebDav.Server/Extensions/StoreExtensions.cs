@@ -13,7 +13,7 @@ namespace NWebDav.Server.Extensions
             IStoreItem item;
             try
             {
-                return await collection.GetFirstByNameAsync(name, cancellationToken).ConfigureAwait(false);
+                return await collection.GetFirstByNameAsync_Dav(name, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (ex is DirectoryNotFoundException or FileNotFoundException)
             {

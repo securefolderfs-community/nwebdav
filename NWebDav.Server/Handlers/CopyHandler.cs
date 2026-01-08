@@ -119,7 +119,7 @@ namespace NWebDav.Server.Handlers
 
                 // Copy all childs of the source collection
                 await foreach (var entry in sourceCollection.GetItemsAsync(StorableType.All, cancellationToken).ConfigureAwait(false))
-                    await CopyAsync(entry, newCollection, entry.Name, overwrite, depth - 1, cancellationToken, newBaseUri, errors).ConfigureAwait(false);
+                    await CopyAsync((IStoreItem)entry, newCollection, entry.Name, overwrite, depth - 1, cancellationToken, newBaseUri, errors).ConfigureAwait(false);
             }
         }
     }

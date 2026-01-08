@@ -184,7 +184,7 @@ namespace NWebDav.Server.Stores
                 else
                 {
                     // Create the item in the destination collection
-                    var result = await destination.CreateItemAsync(name, overwrite, cancellationToken).ConfigureAwait(false);
+                    var result = await destination.CreateItemAsync_Dav(name, overwrite, cancellationToken).ConfigureAwait(false);
 
                     // Check if the item could be created
                     if (result.Item != null)

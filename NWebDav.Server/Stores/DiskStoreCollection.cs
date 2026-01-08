@@ -36,8 +36,9 @@ namespace NWebDav.Server.Stores
             IsWritable = isWritable;
         }
 
+
         /// <inheritdoc/>
-        public virtual async IAsyncEnumerable<IStoreItem> GetItemsAsync(StorableType type = StorableType.All, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public virtual async IAsyncEnumerable<IStorableChild> GetItemsAsync(StorableType type = StorableType.All, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             await Task.CompletedTask;
             cancellationToken.ThrowIfCancellationRequested();
@@ -67,7 +68,8 @@ namespace NWebDav.Server.Stores
                         yield return item switch
                         {
                             FileInfo => NewFile(item.FullName),
-                            DirectoryInfo => NewCollection(item.FullName)
+                            DirectoryInfo => NewCollection(item.FullName),
+                            _ => throw new InvalidOperationException("Unknown file system item type.")
                         };
                     }
 
@@ -88,7 +90,7 @@ namespace NWebDav.Server.Stores
         }
 
         /// <inheritdoc/>
-        public virtual async Task<IStoreItem> GetFirstByNameAsync(string name, CancellationToken cancellationToken)
+        public virtual async Task<IStoreItem> GetFirstByNameAsync_Dav(string name, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
             cancellationToken.ThrowIfCancellationRequested();
@@ -109,7 +111,7 @@ namespace NWebDav.Server.Stores
         }
 
         /// <inheritdoc/>
-        public virtual async Task<IStoreItem> MoveItemAsync(IStoreItem storeItem, IStoreCollection destinationCollection, string destinationName, bool overwrite, CancellationToken cancellationToken)
+        public virtual async Task<IStoreItem> MoveItemAsync_Dav(IStoreItem storeItem, IStoreCollection destinationCollection, string destinationName, bool overwrite, CancellationToken cancellationToken)
         {
             // Return error
             if (!IsWritable)
@@ -180,7 +182,7 @@ namespace NWebDav.Server.Stores
                     var result = await storeItem.CopyAsync(destinationCollection, destinationName, overwrite, cancellationToken).ConfigureAwait(false);
                     if (result.Result == HttpStatusCode.Created || result.Result == HttpStatusCode.NoContent)
                     {
-                        await DeleteAsync(storeItem, cancellationToken).ConfigureAwait(false);
+                        await DeleteAsync_Dav(storeItem, cancellationToken).ConfigureAwait(false);
                         return result.Item!;
                     }
                     else
@@ -196,7 +198,7 @@ namespace NWebDav.Server.Stores
         }
 
         /// <inheritdoc/>
-        public virtual async Task DeleteAsync(IStoreItem storeItem, CancellationToken cancellationToken)
+        public virtual async Task DeleteAsync_Dav(IStoreItem storeItem, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
 
@@ -370,7 +372,7 @@ namespace NWebDav.Server.Stores
         public IPropertyManager PropertyManager => DefaultPropertyManager;
         public ILockingManager LockingManager { get; }
 
-        public Task<StoreItemResult> CreateItemAsync(string name, bool overwrite, CancellationToken cancellationToken)
+        public Task<StoreItemResult> CreateItemAsync_Dav(string name, bool overwrite, CancellationToken cancellationToken)
         {
             // Return error
             if (!IsWritable)
@@ -412,7 +414,7 @@ namespace NWebDav.Server.Stores
             return Task.FromResult(new StoreItemResult(result, new DiskStoreFile(LockingManager, new FileInfo(destinationPath), IsWritable)));
         }
 
-        public Task<StoreCollectionResult> CreateCollectionAsync(string name, bool overwrite, CancellationToken cancellationToken)
+        public Task<StoreCollectionResult> CreateCollectionAsync_Dav(string name, bool overwrite, CancellationToken cancellationToken)
         {
             // Return error
             if (!IsWritable)
@@ -458,16 +460,16 @@ namespace NWebDav.Server.Stores
         public async Task<StoreItemResult> CopyAsync(IStoreCollection destinationCollection, string name, bool overwrite, CancellationToken cancellationToken)
         {
             // Just create the folder itself
-            var result = await destinationCollection.CreateCollectionAsync(name, overwrite, cancellationToken).ConfigureAwait(false);
+            var result = await destinationCollection.CreateCollectionAsync_Dav(name, overwrite, cancellationToken).ConfigureAwait(false);
             return new StoreItemResult(result.Result, result.Collection);
         }
 
-        public bool SupportsFastMove(IStoreCollection destination, string destinationName, bool overwrite)
+        public bool SupportsFastMove_Dav(IStoreCollection destination, string destinationName, bool overwrite)
         {
             // We can only move disk-store collections
             return destination is DiskStoreCollection;
         }
 
-        public EnumerationDepthMode InfiniteDepthMode => EnumerationDepthMode.Rejected;
+        public EnumerationDepthMode DepthMode => EnumerationDepthMode.Rejected;
     }
 }

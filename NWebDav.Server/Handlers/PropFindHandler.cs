@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+﻿﻿using Microsoft.Extensions.Logging;
 using NWebDav.Server.Enums;
 using NWebDav.Server.Helpers;
 using NWebDav.Server.Http;
@@ -81,7 +81,7 @@ namespace NWebDav.Server.Handlers
                 // Check if the collection supports Infinite depth for properties
                 if (depth > 1)
                 {
-                    switch (topCollection.InfiniteDepthMode)
+                    switch (topCollection.DepthMode)
                     {
                         case EnumerationDepthMode.Rejected:
                             response.SetStatus(HttpStatusCode.Forbidden, "Not allowed to obtain properties with infinite depth.");
@@ -271,11 +271,12 @@ namespace NWebDav.Server.Handlers
                 // Add all child collections
                 await foreach (var childEntry in collection.GetItemsAsync(StorableType.All, cancellationToken).ConfigureAwait(false))
                 {
-                    var subUri = UriHelper.Combine(uri, childEntry.Name);
-                    if (childEntry is IStoreCollection subCollection)
+                    var storeItem = (IStoreItem)childEntry;
+                    var subUri = UriHelper.Combine(uri, storeItem.Name);
+                    if (storeItem is IStoreCollection subCollection)
                         await AddEntriesAsync(subCollection, depth - 1, subUri, entries, cancellationToken).ConfigureAwait(false);
                     else
-                        entries.Add(new PropertyEntry(subUri, childEntry));
+                        entries.Add(new PropertyEntry(subUri, storeItem));
                 }
             }
         }

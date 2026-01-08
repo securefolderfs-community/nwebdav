@@ -12,7 +12,7 @@ namespace NWebDav.Server.Extensions
         {
             try
             {
-                await collection.DeleteAsync(storeItem, cancellationToken);
+                await collection.DeleteAsync_Dav(storeItem, cancellationToken);
                 return HttpStatusCode.OK;
             }
             catch (UnauthorizedAccessException)

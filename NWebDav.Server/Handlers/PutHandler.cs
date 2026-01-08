@@ -46,7 +46,7 @@ namespace NWebDav.Server.Handlers
 
             // Obtain the item - decode URL-encoded characters
             var decodedName = Uri.UnescapeDataString(splitUri.Name);
-            var result = await collection.CreateItemAsync(decodedName, true, cancellationToken).ConfigureAwait(false);
+            var result = await collection.CreateItemAsync_Dav(decodedName, true, cancellationToken).ConfigureAwait(false);
             var status = result.Result;
             if (status is HttpStatusCode.Created or HttpStatusCode.NoContent)
             {

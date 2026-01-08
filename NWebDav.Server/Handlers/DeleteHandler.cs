@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+﻿﻿using Microsoft.Extensions.Logging;
 using NWebDav.Server.Extensions;
 using NWebDav.Server.Helpers;
 using NWebDav.Server.Stores;
@@ -105,7 +105,7 @@ namespace NWebDav.Server.Handlers
 
                 // Delete all entries first
                 await foreach (var entry in deleteCollection.GetItemsAsync(StorableType.All, cancellationToken).ConfigureAwait(false))
-                    await DeleteItemAsync(deleteCollection, entry.Name, subBaseUri, cancellationToken).ConfigureAwait(false);
+                    await DeleteItemAsync(deleteCollection, ((IStoreItem)entry).Name, subBaseUri, cancellationToken).ConfigureAwait(false);
             }
 
             // Attempt to delete the item
