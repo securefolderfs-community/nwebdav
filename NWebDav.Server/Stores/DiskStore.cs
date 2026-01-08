@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using NWebDav.Server.Helpers;
 using NWebDav.Server.Http;
 using NWebDav.Server.Locking;
+using NWebDav.Server.Storage;
 
 namespace NWebDav.Server.Stores
 {
@@ -23,32 +24,32 @@ namespace NWebDav.Server.Stores
         public bool IsWritable { get; }
         public ILockingManager LockingManager { get; }
 
-        public virtual Task<IStoreItem?> GetItemAsync(Uri uri, CancellationToken cancellationToken)
+        public virtual Task<IDavStorable?> GetItemAsync(Uri uri, CancellationToken cancellationToken)
         {
             // Determine the path from the uri
             var path = GetPathFromUri(uri);
 
             // Check if it's a directory
             if (Directory.Exists(path))
-                return Task.FromResult<IStoreItem>(new DiskStoreCollection(LockingManager, new DirectoryInfo(path), IsWritable));
+                return Task.FromResult<IDavStorable?>(new DiskStoreCollection(LockingManager, new DirectoryInfo(path), IsWritable));
 
             // Check if it's a file
             if (File.Exists(path))
-                return Task.FromResult<IStoreItem>(new DiskStoreFile(LockingManager, new FileInfo(path), IsWritable));
+                return Task.FromResult<IDavStorable?>(new DiskStoreFile(LockingManager, new FileInfo(path), IsWritable));
 
             // The item doesn't exist
-            return Task.FromResult<IStoreItem>(null);
+            return Task.FromResult<IDavStorable?>(null);
         }
 
-        public virtual Task<IStoreCollection?> GetCollectionAsync(Uri uri, CancellationToken cancellationToken)
+        public virtual Task<IDavFolder?> GetCollectionAsync(Uri uri, CancellationToken cancellationToken)
         {
             // Determine the path from the uri
             var path = GetPathFromUri(uri);
             if (!Directory.Exists(path))
-                return Task.FromResult<IStoreCollection>(null);
+                return Task.FromResult<IDavFolder?>(null);
 
             // Return the item
-            return Task.FromResult<IStoreCollection>(new DiskStoreCollection(LockingManager, new DirectoryInfo(path), IsWritable));
+            return Task.FromResult<IDavFolder?>(new DiskStoreCollection(LockingManager, new DirectoryInfo(path), IsWritable));
         }
 
         protected virtual string GetPathFromUri(Uri uri)

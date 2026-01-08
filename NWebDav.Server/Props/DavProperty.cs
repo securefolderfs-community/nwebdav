@@ -1,5 +1,5 @@
 ﻿using NWebDav.Server.Http;
-using NWebDav.Server.Stores;
+using NWebDav.Server.Storage;
 using System;
 using System.Diagnostics;
 using System.Net;
@@ -19,7 +19,7 @@ namespace NWebDav.Server.Props
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
     [DebuggerDisplay("{Name}")]
-    public abstract class DavProperty<TEntry> where TEntry : IStoreItem
+    public abstract class DavProperty<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Full name of the property

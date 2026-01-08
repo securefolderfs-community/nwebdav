@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using NWebDav.Server.Helpers;
+using NWebDav.Server.Storage;
 using NWebDav.Server.Stores;
 using OwlCore.Storage;
 using System;
@@ -97,7 +98,7 @@ namespace NWebDav.Server.Handlers
             }
         }
 
-        private async Task CopyAsync(IStoreItem source, IStoreCollection destinationCollection, string name, bool overwrite, int depth, CancellationToken cancellationToken, Uri baseUri, UriResultCollection errors)
+        private async Task CopyAsync(IDavStorable source, IDavFolder destinationCollection, string name, bool overwrite, int depth, CancellationToken cancellationToken, Uri baseUri, UriResultCollection errors)
         {
             // Determine the new base Uri
             var newBaseUri = UriHelper.Combine(baseUri, name);
@@ -111,15 +112,15 @@ namespace NWebDav.Server.Handlers
             }
 
             // Check if the source is a collection and we are requested to copy recursively
-            var sourceCollection = source as IStoreCollection;
+            var sourceCollection = source as IDavFolder;
             if (sourceCollection != null && depth > 0)
             {
                 // The result should also contain a collection
-                var newCollection = (IStoreCollection)copyResult.Item;
+                var newCollection = (IDavFolder)copyResult.Item;
 
                 // Copy all childs of the source collection
                 await foreach (var entry in sourceCollection.GetItemsAsync(StorableType.All, cancellationToken).ConfigureAwait(false))
-                    await CopyAsync((IStoreItem)entry, newCollection, entry.Name, overwrite, depth - 1, cancellationToken, newBaseUri, errors).ConfigureAwait(false);
+                    await CopyAsync((IDavStorable)entry, newCollection, entry.Name, overwrite, depth - 1, cancellationToken, newBaseUri, errors).ConfigureAwait(false);
             }
         }
     }

@@ -1,5 +1,5 @@
 ﻿using NWebDav.Server.Http;
-using NWebDav.Server.Stores;
+using NWebDav.Server.Storage;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -27,7 +27,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TType">
     /// CLR type of the property.
     /// </typeparam>
-    public abstract class DavTypedProperty<TEntry, TType> : DavProperty<TEntry> where TEntry : IStoreItem
+    public abstract class DavTypedProperty<TEntry, TType> : DavProperty<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Converter defining methods to convert property values from/to XML.
@@ -164,7 +164,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public abstract class DavRfc1123Date<TEntry> : DavTypedProperty<TEntry, DateTime> where TEntry : IStoreItem
+    public abstract class DavRfc1123Date<TEntry> : DavTypedProperty<TEntry, DateTime> where TEntry : IDavStorable
     {
         private class Rfc1123DateConverter : IConverter
         {
@@ -187,7 +187,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public abstract class DavIso8601Date<TEntry> : DavTypedProperty<TEntry, DateTime> where TEntry : IStoreItem
+    public abstract class DavIso8601Date<TEntry> : DavTypedProperty<TEntry, DateTime> where TEntry : IDavStorable
     {
         private class Iso8601DateConverter : IConverter
         {
@@ -231,7 +231,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public abstract class DavBoolean<TEntry> : DavTypedProperty<TEntry, Boolean> where TEntry : IStoreItem
+    public abstract class DavBoolean<TEntry> : DavTypedProperty<TEntry, Boolean> where TEntry : IDavStorable
     {
         private class BooleanConverter : IConverter
         {
@@ -254,7 +254,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public abstract class DavString<TEntry> : DavTypedProperty<TEntry, string> where TEntry : IStoreItem
+    public abstract class DavString<TEntry> : DavTypedProperty<TEntry, string> where TEntry : IDavStorable
     {
         private class StringConverter : IConverter
         {
@@ -277,7 +277,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public abstract class DavInt32<TEntry> : DavTypedProperty<TEntry, Int32> where TEntry : IStoreItem
+    public abstract class DavInt32<TEntry> : DavTypedProperty<TEntry, Int32> where TEntry : IDavStorable
     {
         private class Int32Converter : IConverter
         {
@@ -300,7 +300,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public abstract class DavInt64<TEntry> : DavTypedProperty<TEntry, Int64> where TEntry : IStoreItem
+    public abstract class DavInt64<TEntry> : DavTypedProperty<TEntry, Int64> where TEntry : IDavStorable
     {
         private class Int64Converter : IConverter
         {
@@ -323,7 +323,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public abstract class DavXElementArray<TEntry> : DavTypedProperty<TEntry, IEnumerable<XElement>> where TEntry : IStoreItem
+    public abstract class DavXElementArray<TEntry> : DavTypedProperty<TEntry, IEnumerable<XElement>> where TEntry : IDavStorable
     {
         private class XElementArrayConverter : IConverter
         {
@@ -346,7 +346,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public abstract class DavXElement<TEntry> : DavTypedProperty<TEntry, XElement> where TEntry : IStoreItem
+    public abstract class DavXElement<TEntry> : DavTypedProperty<TEntry, XElement> where TEntry : IDavStorable
     {
         private class XElementConverter : IConverter
         {
@@ -369,7 +369,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public abstract class DavUri<TEntry> : DavTypedProperty<TEntry, Uri> where TEntry : IStoreItem
+    public abstract class DavUri<TEntry> : DavTypedProperty<TEntry, Uri> where TEntry : IDavStorable
     {
         private class UriConverter : IConverter
         {

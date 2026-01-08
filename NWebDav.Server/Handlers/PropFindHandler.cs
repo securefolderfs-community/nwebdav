@@ -1,8 +1,9 @@
-﻿﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using NWebDav.Server.Enums;
 using NWebDav.Server.Helpers;
 using NWebDav.Server.Http;
 using NWebDav.Server.Props;
+using NWebDav.Server.Storage;
 using NWebDav.Server.Stores;
 using OwlCore.Storage;
 using System;
@@ -29,9 +30,9 @@ namespace NWebDav.Server.Handlers
         private struct PropertyEntry
         {
             public Uri Uri { get; }
-            public IStoreItem Entry { get; }
+            public IDavStorable Entry { get; }
 
-            public PropertyEntry(Uri uri, IStoreItem entry)
+            public PropertyEntry(Uri uri, IDavStorable entry)
             {
                 Uri = uri;
                 Entry = entry;
@@ -73,7 +74,7 @@ namespace NWebDav.Server.Handlers
             }
 
             // Check if the entry is a collection
-            if (topEntry is IStoreCollection topCollection)
+            if (topEntry is IDavFolder topCollection)
             {
                 // Determine depth
                 var depth = request.GetDepth();
@@ -166,7 +167,7 @@ namespace NWebDav.Server.Handlers
             await response.SendResponseAsync(HttpStatusCode.MultiStatus, xDocument, logger, cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task AddPropertyAsync(HttpListenerContext context, XElement xResponse, XElement xPropStatValues, IPropertyManager propertyManager, IStoreItem item, XName propertyName, IList<XName> addedProperties, ILogger? logger)
+        private async Task AddPropertyAsync(HttpListenerContext context, XElement xResponse, XElement xPropStatValues, IPropertyManager propertyManager, IDavStorable item, XName propertyName, IList<XName> addedProperties, ILogger? logger)
         {
             if (!addedProperties.Contains(propertyName))
             {
@@ -260,7 +261,7 @@ namespace NWebDav.Server.Handlers
             return propertyMode;
         }
 
-        private async Task AddEntriesAsync(IStoreCollection collection, int depth, Uri uri, IList<PropertyEntry> entries, CancellationToken cancellationToken)
+        private async Task AddEntriesAsync(IDavFolder collection, int depth, Uri uri, IList<PropertyEntry> entries, CancellationToken cancellationToken)
         {
             // Add the collection to the list
             entries.Add(new PropertyEntry(uri, collection));
@@ -271,12 +272,12 @@ namespace NWebDav.Server.Handlers
                 // Add all child collections
                 await foreach (var childEntry in collection.GetItemsAsync(StorableType.All, cancellationToken).ConfigureAwait(false))
                 {
-                    var storeItem = (IStoreItem)childEntry;
-                    var subUri = UriHelper.Combine(uri, storeItem.Name);
-                    if (storeItem is IStoreCollection subCollection)
+                    var davItem = (IDavStorable)childEntry;
+                    var subUri = UriHelper.Combine(uri, davItem.Name);
+                    if (davItem is IDavFolder subCollection)
                         await AddEntriesAsync(subCollection, depth - 1, subUri, entries, cancellationToken).ConfigureAwait(false);
                     else
-                        entries.Add(new PropertyEntry(subUri, storeItem));
+                        entries.Add(new PropertyEntry(subUri, davItem));
                 }
             }
         }

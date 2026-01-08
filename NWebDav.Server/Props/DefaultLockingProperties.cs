@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 
-using NWebDav.Server.Stores;
+using NWebDav.Server.Storage;
 using SecureFolderFS.Shared.Extensions;
 
 namespace NWebDav.Server.Props
@@ -11,13 +11,13 @@ namespace NWebDav.Server.Props
     /// <remarks>
     /// This property implementation calls the
     /// <see cref="NWebDav.Server.Locking.ILockingManager.GetActiveLockInfo"/>
-    /// of the item's <see cref="IStoreItem.LockingManager"/> to determine the
+    /// of the item's <see cref="IDavStorable.LockingManager"/> to determine the
     /// active locks.
     /// </remarks>
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public sealed class DavLockDiscoveryDefault<TEntry> : DavLockDiscovery<TEntry> where TEntry : IStoreItem
+    public sealed class DavLockDiscoveryDefault<TEntry> : DavLockDiscovery<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Create an instance of the <see cref="DavLockDiscovery{TEntry}"/>
@@ -37,13 +37,13 @@ namespace NWebDav.Server.Props
     /// <remarks>
     /// This property implementation calls the
     /// <see cref="NWebDav.Server.Locking.ILockingManager.GetSupportedLocks"/>
-    /// of the item's <see cref="IStoreItem.LockingManager"/> to determine the
+    /// of the item's <see cref="IDavStorable.LockingManager"/> to determine the
     /// supported locks.
     /// </remarks>
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public sealed class DavSupportedLockDefault<TEntry> : DavSupportedLock<TEntry> where TEntry : IStoreItem
+    public sealed class DavSupportedLockDefault<TEntry> : DavSupportedLock<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Create an instance of the <see cref="DavSupportedLock{TEntry}"/>

@@ -1,6 +1,7 @@
 ﻿using NWebDav.Server.Enums;
 using NWebDav.Server.Locking;
 using NWebDav.Server.Props;
+using NWebDav.Server.Storage;
 using OwlCore.Storage;
 using System;
 using System.Collections.Generic;
@@ -16,7 +17,7 @@ using System.Xml.Linq;
 namespace NWebDav.Server.Stores
 {
     [DebuggerDisplay("{_directoryInfo.FullPath}\\")]
-    public class DiskStoreCollection : IStoreCollection
+    public class DiskStoreCollection : IDavFolder
     {
         private static readonly XElement s_xDavCollection = new XElement(WebDavNamespaces.DavNs + "collection");
         private readonly DirectoryInfo _directoryInfo;
@@ -119,7 +120,7 @@ namespace NWebDav.Server.Stores
         }
 
         /// <inheritdoc/>
-        public virtual async Task<IStoreItem> MoveItemAsync_Dav(IStoreItem storeItem, IStoreCollection destinationCollection, string destinationName, bool overwrite, CancellationToken cancellationToken)
+        public virtual async Task<IDavStorable> MoveItemAsync(IDavStorable item, IDavFolder destination, string destinationName, bool overwrite, CancellationToken cancellationToken = default)
         {
             // Return error
             if (!IsWritable)
@@ -128,14 +129,14 @@ namespace NWebDav.Server.Stores
             try
             {
                 // If the destination collection is a directory too, then we can simply move the file
-                if (destinationCollection is DiskStoreCollection destinationDiskStoreCollection)
+                if (destination is DiskStoreCollection destinationDiskStoreCollection)
                 {
                     // Return error
                     if (!destinationDiskStoreCollection.IsWritable)
                         throw new HttpListenerException((int)HttpStatusCode.PreconditionFailed);
 
                     // Determine source and destination paths
-                    var sourcePath = storeItem.Id;
+                    var sourcePath = item.Id;
                     var destinationPath = Path.Combine(destinationDiskStoreCollection._directoryInfo.FullName, destinationName);
 
                     // Check if the file already exists
@@ -166,7 +167,7 @@ namespace NWebDav.Server.Stores
                         result = HttpStatusCode.Created;
                     }
 
-                    switch (storeItem)
+                    switch (item)
                     {
                         case DiskStoreFile:
                             // Move the file
@@ -180,17 +181,17 @@ namespace NWebDav.Server.Stores
 
                         default:
                             // Invalid item
-                            Debug.Fail($"Invalid item {storeItem.GetType()} inside the {nameof(DiskStoreCollection)}.");
+                            Debug.Fail($"Invalid item {item.GetType()} inside the {nameof(DiskStoreCollection)}.");
                             throw new HttpListenerException((int)HttpStatusCode.InternalServerError);
                     }
                 }
                 else
                 {
                     // Attempt to copy the item to the destination collection
-                    var result = await storeItem.CopyAsync(destinationCollection, destinationName, overwrite, cancellationToken).ConfigureAwait(false);
+                    var result = await item.CopyAsync(destination, destinationName, overwrite, cancellationToken).ConfigureAwait(false);
                     if (result.Result == HttpStatusCode.Created || result.Result == HttpStatusCode.NoContent)
                     {
-                        await DeleteAsync(storeItem, cancellationToken).ConfigureAwait(false);
+                        await DeleteAsync(item, cancellationToken).ConfigureAwait(false);
                         return result.Item!;
                     }
                     else
@@ -328,12 +329,12 @@ namespace NWebDav.Server.Stores
             return new DiskStoreFile(LockingManager, new FileInfo(destinationPath), IsWritable);
         }
 
-        protected virtual IStoreFile NewFile(string id)
+        protected virtual IDavFile NewFile(string id)
         {
             return new DiskStoreFile(LockingManager, new(id), IsWritable);
         }
 
-        protected virtual IStoreCollection NewCollection(string id)
+        protected virtual IDavFolder NewCollection(string id)
         {
             return new DiskStoreCollection(LockingManager, new(id), IsWritable);
         }
@@ -458,13 +459,13 @@ namespace NWebDav.Server.Stores
         public IPropertyManager PropertyManager => DefaultPropertyManager;
         public ILockingManager LockingManager { get; }
 
-        public async Task<StoreItemResult> CopyAsync(IStoreCollection destinationCollection, string name, bool overwrite, CancellationToken cancellationToken)
+        public async Task<StoreItemResult> CopyAsync(IDavFolder destination, string name, bool overwrite, CancellationToken cancellationToken)
         {
             // Just create the folder itself
             try
             {
-                var result = await destinationCollection.CreateFolderAsync(name, overwrite, cancellationToken).ConfigureAwait(false);
-                return new StoreItemResult(HttpStatusCode.Created, (IStoreItem)result);
+                var result = await destination.CreateFolderAsync(name, overwrite, cancellationToken).ConfigureAwait(false);
+                return new StoreItemResult(HttpStatusCode.Created, (IDavStorable)result);
             }
             catch (HttpListenerException ex)
             {
@@ -472,7 +473,7 @@ namespace NWebDav.Server.Stores
             }
         }
 
-        public bool SupportsFastMove(IStoreCollection destination, string destinationName, bool overwrite)
+        public bool SupportsFastMove(IDavFolder destination, string destinationName, bool overwrite)
         {
             // We can only move disk-store collections
             return destination is DiskStoreCollection;

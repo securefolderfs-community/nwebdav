@@ -6,6 +6,7 @@ using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 using NWebDav.Server.Extensions;
 using NWebDav.Server.Helpers;
+using NWebDav.Server.Storage;
 using NWebDav.Server.Stores;
 using OwlCore.Storage;
 using SecureFolderFS.Storage.Extensions;
@@ -54,7 +55,7 @@ namespace NWebDav.Server.Handlers
             }
 
             // Obtain the item that actually is deleted
-            var deleteItem = (IStoreItem?)await parentCollection.TryGetFirstByNameAsync(splitUri.Name, cancellationToken).ConfigureAwait(false);
+            var deleteItem = (IDavStorable?)await parentCollection.TryGetFirstByNameAsync(splitUri.Name, cancellationToken).ConfigureAwait(false);
             if (deleteItem is null)
             {
                 // Source not found
@@ -95,18 +96,18 @@ namespace NWebDav.Server.Handlers
             }
         }
 
-        private async Task<HttpStatusCode> DeleteItemAsync(IStoreCollection collection, string name, Uri baseUri, CancellationToken cancellationToken)
+        private async Task<HttpStatusCode> DeleteItemAsync(IDavFolder collection, string name, Uri baseUri, CancellationToken cancellationToken)
         {
             // Obtain the actual item
-            var deleteItem = (IStoreItem?)await collection.TryGetFirstByNameAsync(name, cancellationToken).ConfigureAwait(false);
-            if (deleteItem is IStoreCollection deleteCollection)
+            var deleteItem = (IDavStorable?)await collection.TryGetFirstByNameAsync(name, cancellationToken).ConfigureAwait(false);
+            if (deleteItem is IDavFolder deleteCollection)
             {
                 // Determine the new base URI
                 var subBaseUri = UriHelper.Combine(baseUri, name);
 
                 // Delete all entries first
                 await foreach (var entry in deleteCollection.GetItemsAsync(StorableType.All, cancellationToken).ConfigureAwait(false))
-                    await DeleteItemAsync(deleteCollection, ((IStoreItem)entry).Name, subBaseUri, cancellationToken).ConfigureAwait(false);
+                    await DeleteItemAsync(deleteCollection, ((IDavStorable)entry).Name, subBaseUri, cancellationToken).ConfigureAwait(false);
             }
 
             // Attempt to delete the item

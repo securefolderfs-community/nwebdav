@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
@@ -47,19 +47,19 @@ namespace NWebDav.Server.Handlers
             // Obtain the item - decode URL-encoded characters
             var decodedName = Uri.UnescapeDataString(splitUri.Name);
 
-            IStoreFile? storeFile = null;
+            IDavFile? davFile = null;
             var status = HttpStatusCode.Created;
 
             try
             {
-                storeFile = (IStoreFile)await collection.CreateFileAsync(decodedName, true, cancellationToken).ConfigureAwait(false);
+                davFile = (IDavFile)await collection.CreateFileAsync(decodedName, true, cancellationToken).ConfigureAwait(false);
             }
             catch (HttpListenerException ex)
             {
                 status = (HttpStatusCode)ex.ErrorCode;
             }
 
-            if (storeFile != null)
+            if (davFile != null)
             {
                     // Check if there's content to upload
                     // macOS Finder uses chunked transfer encoding with X-Expected-Entity-Length header
@@ -81,7 +81,7 @@ namespace NWebDav.Server.Handlers
                         // Upload the information to the item
                         try
                         {
-                            await using var outputStream = await storeFile.OpenStreamAsync(FileAccess.Write, cancellationToken).ConfigureAwait(false);
+                            await using var outputStream = await davFile.OpenStreamAsync(FileAccess.Write, cancellationToken).ConfigureAwait(false);
                             await inputStream.CopyToAsync(outputStream, cancellationToken).ConfigureAwait(false);
                             await outputStream.FlushAsync(cancellationToken).ConfigureAwait(false);
                             status = HttpStatusCode.OK;

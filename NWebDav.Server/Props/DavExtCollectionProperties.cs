@@ -1,6 +1,6 @@
 ﻿using System.Xml.Linq;
 
-using NWebDav.Server.Stores;
+using NWebDav.Server.Storage;
 
 namespace NWebDav.Server.Props
 {
@@ -24,7 +24,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public class DavExtCollectionChildCount<TEntry> : DavInt32<TEntry> where TEntry : IStoreItem
+    public class DavExtCollectionChildCount<TEntry> : DavInt32<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Name of the property (static).
@@ -61,7 +61,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public class DavExtCollectionDefaultDocument<TEntry> : DavString<TEntry> where TEntry : IStoreItem
+    public class DavExtCollectionDefaultDocument<TEntry> : DavString<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Name of the property (static).
@@ -96,7 +96,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public class DavExtCollectionId<TEntry> : DavUri<TEntry> where TEntry : IStoreItem
+    public class DavExtCollectionId<TEntry> : DavUri<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Name of the property (static).
@@ -130,7 +130,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public class DavExtCollectionIsFolder<TEntry> : DavBoolean<TEntry> where TEntry : IStoreItem
+    public class DavExtCollectionIsFolder<TEntry> : DavBoolean<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Name of the property (static).
@@ -173,7 +173,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public class DavExtCollectionIsHidden<TEntry> : DavBoolean<TEntry> where TEntry : IStoreItem
+    public class DavExtCollectionIsHidden<TEntry> : DavBoolean<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Name of the property (static).
@@ -221,7 +221,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public class DavExtCollectionIsStructuredDocument<TEntry> : DavBoolean<TEntry> where TEntry : IStoreItem
+    public class DavExtCollectionIsStructuredDocument<TEntry> : DavBoolean<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Name of the property (static).
@@ -262,7 +262,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public class DavExtCollectionHasSubs<TEntry> : DavBoolean<TEntry> where TEntry : IStoreItem
+    public class DavExtCollectionHasSubs<TEntry> : DavBoolean<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Name of the property (static).
@@ -318,7 +318,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public class DavExtCollectionNoSubs<TEntry> : DavBoolean<TEntry> where TEntry : IStoreItem
+    public class DavExtCollectionNoSubs<TEntry> : DavBoolean<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Name of the property (static).
@@ -351,7 +351,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public class DavExtCollectionObjectCount<TEntry> : DavInt32<TEntry> where TEntry : IStoreItem
+    public class DavExtCollectionObjectCount<TEntry> : DavInt32<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Name of the property (static).
@@ -389,7 +389,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public class DavExtCollectionReserved<TEntry> : DavBoolean<TEntry> where TEntry : IStoreItem
+    public class DavExtCollectionReserved<TEntry> : DavBoolean<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Name of the property (static).
@@ -424,7 +424,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public class DavExtCollectionVisibleCount<TEntry> : DavInt32<TEntry> where TEntry : IStoreItem
+    public class DavExtCollectionVisibleCount<TEntry> : DavInt32<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Name of the property (static).

@@ -1,5 +1,5 @@
 ﻿using NWebDav.Server.Http;
-using NWebDav.Server.Stores;
+using NWebDav.Server.Storage;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +11,7 @@ namespace NWebDav.Server.Props
 {
     /// <summary>
     /// Property manager that handles all the properties for a specific store
-    /// item and collection. 
+    /// item and collection.
     /// </summary>
     /// <remarks>
     /// The default property manager is used to define the root property
@@ -20,7 +20,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public class PropertyManager<TEntry> : IPropertyManager where TEntry : IStoreItem
+    public class PropertyManager<TEntry> : IPropertyManager where TEntry : IDavStorable
     {
         private readonly IDictionary<XName, DavProperty<TEntry>> _properties;
 
@@ -71,7 +71,7 @@ namespace NWebDav.Server.Props
         /// <paramref name="skipExpensive"/> is set to <see langword="true"/>
         /// and the parameter is expensive to compute.
         /// </returns>
-        public Task<object> GetPropertyAsync(HttpListenerContext context, IStoreItem item, XName propertyName, bool skipExpensive = false)
+        public Task<object> GetPropertyAsync(HttpListenerContext context, IDavStorable item, XName propertyName, bool skipExpensive = false)
         {
             // Find the property
             if (!_properties.TryGetValue(propertyName, out var property))
@@ -108,7 +108,7 @@ namespace NWebDav.Server.Props
         /// A task that represents the set property operation. The task will
         /// return the WebDAV status code of the set operation upon completion.
         /// </returns>
-        public Task<HttpStatusCode> SetPropertyAsync(HttpListenerContext context, IStoreItem item, XName propertyName, object value)
+        public Task<HttpStatusCode> SetPropertyAsync(HttpListenerContext context, IDavStorable item, XName propertyName, object value)
         {
             // Find the property
             if (!_properties.TryGetValue(propertyName, out var property))

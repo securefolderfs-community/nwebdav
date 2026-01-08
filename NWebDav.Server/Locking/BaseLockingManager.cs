@@ -1,4 +1,4 @@
-﻿using NWebDav.Server.Stores;
+﻿using NWebDav.Server.Storage;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -12,7 +12,7 @@ namespace NWebDav.Server.Locking
     public abstract class BaseLockingManager : ILockingManager
     {
         /// <inheritdoc/>
-        public async Task<LockResult> LockAsync(IStoreItem item, LockType lockType, LockScope lockScope, XElement owner, Uri lockRootUri, bool recursiveLock, IEnumerable<int> timeouts, CancellationToken cancellationToken)
+        public async Task<LockResult> LockAsync(IDavStorable item, LockType lockType, LockScope lockScope, XElement owner, Uri lockRootUri, bool recursiveLock, IEnumerable<int> timeouts, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
             cancellationToken.ThrowIfCancellationRequested();
@@ -21,7 +21,7 @@ namespace NWebDav.Server.Locking
         }
 
         /// <inheritdoc/>
-        public async Task<HttpStatusCode> UnlockAsync(IStoreItem item, Uri token, CancellationToken cancellationToken)
+        public async Task<HttpStatusCode> UnlockAsync(IDavStorable item, Uri token, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
             cancellationToken.ThrowIfCancellationRequested();
@@ -30,7 +30,7 @@ namespace NWebDav.Server.Locking
         }
 
         /// <inheritdoc/>
-        public async Task<LockResult> RefreshLockAsync(IStoreItem item, bool recursiveLock, IEnumerable<int> timeouts, Uri lockTokenUri, CancellationToken cancellationToken)
+        public async Task<LockResult> RefreshLockAsync(IDavStorable item, bool recursiveLock, IEnumerable<int> timeouts, Uri lockTokenUri, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
             cancellationToken.ThrowIfCancellationRequested();
@@ -39,13 +39,13 @@ namespace NWebDav.Server.Locking
         }
 
         /// <inheritdoc/>
-        IEnumerable<LockEntry> ILockingManager.GetSupportedLocks(IStoreItem item)
+        IEnumerable<LockEntry> ILockingManager.GetSupportedLocks(IDavStorable item)
         {
             return GetSupportedLocks(item);
         }
 
         /// <inheritdoc/>
-        public async Task<bool> IsLockedAsync(IStoreItem item, CancellationToken cancellationToken)
+        public async Task<bool> IsLockedAsync(IDavStorable item, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
             cancellationToken.ThrowIfCancellationRequested();
@@ -54,7 +54,7 @@ namespace NWebDav.Server.Locking
         }
 
         /// <inheritdoc/>
-        public async Task<bool> HasLockAsync(IStoreItem item, Uri lockToken, CancellationToken cancellationToken)
+        public async Task<bool> HasLockAsync(IDavStorable item, Uri lockToken, CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
             cancellationToken.ThrowIfCancellationRequested();
@@ -63,18 +63,18 @@ namespace NWebDav.Server.Locking
         }
 
         /// <inheritdoc/>
-        public abstract IAsyncEnumerable<ActiveLock> GetActiveLockInfoAsync(IStoreItem item, CancellationToken cancellationToken);
+        public abstract IAsyncEnumerable<ActiveLock> GetActiveLockInfoAsync(IDavStorable item, CancellationToken cancellationToken);
 
-        protected abstract IEnumerable<LockEntry> GetSupportedLocks(IStoreItem item);
+        protected abstract IEnumerable<LockEntry> GetSupportedLocks(IDavStorable item);
 
-        protected abstract LockResult Lock(IStoreItem item, LockType lockType, LockScope lockScope, XElement owner, Uri lockRootUri, bool recursiveLock, IEnumerable<int> timeouts);
+        protected abstract LockResult Lock(IDavStorable item, LockType lockType, LockScope lockScope, XElement owner, Uri lockRootUri, bool recursiveLock, IEnumerable<int> timeouts);
 
-        protected abstract HttpStatusCode Unlock(IStoreItem item, Uri token);
+        protected abstract HttpStatusCode Unlock(IDavStorable item, Uri token);
 
-        protected abstract LockResult RefreshLock(IStoreItem item, bool recursiveLock, IEnumerable<int> timeouts, Uri lockTokenUri);
+        protected abstract LockResult RefreshLock(IDavStorable item, bool recursiveLock, IEnumerable<int> timeouts, Uri lockTokenUri);
 
-        protected abstract bool IsLocked(IStoreItem item);
+        protected abstract bool IsLocked(IDavStorable item);
 
-        protected abstract bool HasLock(IStoreItem item, Uri lockToken);
+        protected abstract bool HasLock(IDavStorable item, Uri lockToken);
     }
 }

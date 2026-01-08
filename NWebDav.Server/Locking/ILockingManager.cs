@@ -1,4 +1,4 @@
-﻿using NWebDav.Server.Stores;
+﻿using NWebDav.Server.Storage;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -11,18 +11,18 @@ namespace NWebDav.Server.Locking
     // TODO: Call the locking methods from the handlers
     public interface ILockingManager
     {
-        IEnumerable<LockEntry> GetSupportedLocks(IStoreItem item);
+        IEnumerable<LockEntry> GetSupportedLocks(IDavStorable item);
 
-        Task<LockResult> LockAsync(IStoreItem item, LockType lockType, LockScope lockScope, XElement owner, Uri lockRootUri, bool recursiveLock, IEnumerable<int> timeouts, CancellationToken cancellationToken);
+        Task<LockResult> LockAsync(IDavStorable item, LockType lockType, LockScope lockScope, XElement owner, Uri lockRootUri, bool recursiveLock, IEnumerable<int> timeouts, CancellationToken cancellationToken);
 
-        Task<HttpStatusCode> UnlockAsync(IStoreItem item, Uri token, CancellationToken cancellationToken);
+        Task<HttpStatusCode> UnlockAsync(IDavStorable item, Uri token, CancellationToken cancellationToken);
 
-        Task<LockResult> RefreshLockAsync(IStoreItem item, bool recursiveLock, IEnumerable<int> timeouts, Uri lockTokenUri, CancellationToken cancellationToken);
+        Task<LockResult> RefreshLockAsync(IDavStorable item, bool recursiveLock, IEnumerable<int> timeouts, Uri lockTokenUri, CancellationToken cancellationToken);
 
-        IAsyncEnumerable<ActiveLock> GetActiveLockInfoAsync(IStoreItem item, CancellationToken cancellationToken);
+        IAsyncEnumerable<ActiveLock> GetActiveLockInfoAsync(IDavStorable item, CancellationToken cancellationToken);
 
-        Task<bool> IsLockedAsync(IStoreItem item, CancellationToken cancellationToken);
+        Task<bool> IsLockedAsync(IDavStorable item, CancellationToken cancellationToken);
 
-        Task<bool> HasLockAsync(IStoreItem item, Uri lockToken, CancellationToken cancellationToken);
+        Task<bool> HasLockAsync(IDavStorable item, Uri lockToken, CancellationToken cancellationToken);
     }
 }

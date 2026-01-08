@@ -1,7 +1,8 @@
-﻿﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using NWebDav.Server.Extensions;
 using NWebDav.Server.Helpers;
 using NWebDav.Server.Props;
+using NWebDav.Server.Storage;
 using NWebDav.Server.Stores;
 using System;
 using System.Globalization;
@@ -57,34 +58,34 @@ namespace NWebDav.Server.Handlers
             if (propertyManager != null)
             {
                 // Add Last-Modified header
-                var lastModifiedUtc = (string)(await propertyManager.GetPropertyAsync(context, entry, DavGetLastModified<IStoreItem>.PropertyName, true).ConfigureAwait(false));
+                var lastModifiedUtc = (string)(await propertyManager.GetPropertyAsync(context, entry, DavGetLastModified<IDavStorable>.PropertyName, true).ConfigureAwait(false));
                 if (lastModifiedUtc != null)
                     response.SetHeaderValue("Last-Modified", lastModifiedUtc);
 
                 // Add ETag
-                etag = (string)(await propertyManager.GetPropertyAsync(context, entry, DavGetEtag<IStoreItem>.PropertyName, true).ConfigureAwait(false));
+                etag = (string)(await propertyManager.GetPropertyAsync(context, entry, DavGetEtag<IDavStorable>.PropertyName, true).ConfigureAwait(false));
                 if (etag != null)
                     response.SetHeaderValue("Etag", etag);
 
                 // Add type
-                var contentType = (string)(await propertyManager.GetPropertyAsync(context, entry, DavGetContentType<IStoreItem>.PropertyName, true).ConfigureAwait(false));
+                var contentType = (string)(await propertyManager.GetPropertyAsync(context, entry, DavGetContentType<IDavStorable>.PropertyName, true).ConfigureAwait(false));
                 if (contentType != null)
                     response.SetHeaderValue("Content-Type", contentType);
 
                 // Add language
-                var contentLanguage = (string)(await propertyManager.GetPropertyAsync(context, entry, DavGetContentLanguage<IStoreItem>.PropertyName, true).ConfigureAwait(false));
+                var contentLanguage = (string)(await propertyManager.GetPropertyAsync(context, entry, DavGetContentLanguage<IDavStorable>.PropertyName, true).ConfigureAwait(false));
                 if (contentLanguage != null)
                     response.SetHeaderValue("Content-Language", contentLanguage);
             }
 
-            if (entry is not IStoreFile storeFile)
+            if (entry is not IDavFile davFile)
             {
                 response.SetStatus(HttpStatusCode.NoContent);
                 return;
             }
 
             // Stream the actual entry
-            using (var stream = await storeFile.OpenStreamAsync(FileAccess.Read, cancellationToken).ConfigureAwait(false))
+            using (var stream = await davFile.OpenStreamAsync(FileAccess.Read, cancellationToken).ConfigureAwait(false))
             {
                 if (stream != null && stream != Stream.Null)
                 {
@@ -107,7 +108,7 @@ namespace NWebDav.Server.Handlers
                             // Check if an 'If-Range' was specified
                             if (range?.If != null && propertyManager != null)
                             {
-                                var lastModifiedText = (string)await propertyManager.GetPropertyAsync(context, entry, DavGetLastModified<IStoreItem>.PropertyName, true).ConfigureAwait(false);
+                                var lastModifiedText = (string)await propertyManager.GetPropertyAsync(context, entry, DavGetLastModified<IDavStorable>.PropertyName, true).ConfigureAwait(false);
                                 var lastModified = DateTime.Parse(lastModifiedText, CultureInfo.InvariantCulture);
                                 if (lastModified != range.If)
                                     range = null;

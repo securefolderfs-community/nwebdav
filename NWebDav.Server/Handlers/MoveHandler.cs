@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -6,6 +6,7 @@ using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 using NWebDav.Server.Extensions;
 using NWebDav.Server.Helpers;
+using NWebDav.Server.Storage;
 using NWebDav.Server.Stores;
 using OwlCore.Storage;
 using SecureFolderFS.Storage.Extensions;
@@ -46,7 +47,7 @@ namespace NWebDav.Server.Handlers
             }
 
             // Obtain the item to move
-            var moveItem = (IStoreItem?)await sourceCollection.TryGetFirstByNameAsync(splitSourceUri.Name, cancellationToken).ConfigureAwait(false);
+            var moveItem = (IDavStorable?)await sourceCollection.TryGetFirstByNameAsync(splitSourceUri.Name, cancellationToken).ConfigureAwait(false);
             if (moveItem is null)
             {
                 // Source not found
@@ -119,19 +120,19 @@ namespace NWebDav.Server.Handlers
             }
         }
 
-        private async Task MoveAsync(IStoreCollection sourceCollection, IStoreItem moveItem, IStoreCollection destinationCollection, string destinationName, bool overwrite, Uri baseUri, UriResultCollection errors, CancellationToken cancellationToken)
+        private async Task MoveAsync(IDavFolder sourceCollection, IDavStorable moveItem, IDavFolder destinationCollection, string destinationName, bool overwrite, Uri baseUri, UriResultCollection errors, CancellationToken cancellationToken)
         {
             // Determine the new base URI
             var subBaseUri = UriHelper.Combine(baseUri, destinationName);
 
             // Obtain the actual item
-            if (moveItem is IStoreCollection moveCollection && !moveCollection.SupportsFastMove(destinationCollection, destinationName, overwrite))
+            if (moveItem is IDavFolder moveCollection && !moveCollection.SupportsFastMove(destinationCollection, destinationName, overwrite))
             {
                 // Create a new collection
-                IStoreCollection? newCollection = null;
+                IDavFolder? newCollection = null;
                 try
                 {
-                    newCollection = (IStoreCollection)await destinationCollection.CreateFolderAsync(destinationName, overwrite, cancellationToken).ConfigureAwait(false);
+                    newCollection = (IDavFolder)await destinationCollection.CreateFolderAsync(destinationName, overwrite, cancellationToken).ConfigureAwait(false);
                 }
                 catch (HttpListenerException ex)
                 {
@@ -141,7 +142,7 @@ namespace NWebDav.Server.Handlers
 
                 // Move all sub items
                 await foreach (var entry in moveCollection.GetItemsAsync(StorableType.All, cancellationToken).ConfigureAwait(false))
-                    await MoveAsync(moveCollection, (IStoreItem)entry, newCollection, ((IStoreItem)entry).Name, overwrite, subBaseUri, errors, cancellationToken).ConfigureAwait(false);
+                    await MoveAsync(moveCollection, (IDavStorable)entry, newCollection, ((IDavStorable)entry).Name, overwrite, subBaseUri, errors, cancellationToken).ConfigureAwait(false);
 
                 // Delete the source collection
                 try
@@ -162,7 +163,7 @@ namespace NWebDav.Server.Handlers
                 try
                 {
                     // Items should be moved directly
-                    _ = await sourceCollection.MoveItemAsync_Dav(moveItem, destinationCollection, destinationName, overwrite, cancellationToken).ConfigureAwait(false);
+                    _ = await sourceCollection.MoveItemAsync(moveItem, destinationCollection, destinationName, overwrite, cancellationToken).ConfigureAwait(false);
                 }
                 catch (HttpListenerException ex)
                 {

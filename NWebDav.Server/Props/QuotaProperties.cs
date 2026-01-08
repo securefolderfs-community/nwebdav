@@ -1,6 +1,6 @@
 ﻿using System.Xml.Linq;
 
-using NWebDav.Server.Stores;
+using NWebDav.Server.Storage;
 
 namespace NWebDav.Server.Props
 {
@@ -58,7 +58,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public class DavQuotaAvailableBytes<TEntry> : DavInt64<TEntry> where TEntry : IStoreItem
+    public class DavQuotaAvailableBytes<TEntry> : DavInt64<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Name of the property (static).
@@ -112,7 +112,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public class DavQuotaUsedBytes<TEntry> : DavInt64<TEntry> where TEntry : IStoreItem
+    public class DavQuotaUsedBytes<TEntry> : DavInt64<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Name of the property (static).

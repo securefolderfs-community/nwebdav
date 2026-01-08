@@ -1,4 +1,4 @@
-﻿using NWebDav.Server.Stores;
+﻿using NWebDav.Server.Storage;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,7 +25,7 @@ namespace NWebDav.Server.Locking
         };
 
         /// <inheritdoc/>
-        protected override LockResult Lock(IStoreItem item, LockType lockType, LockScope lockScope, XElement owner, Uri lockRootUri, bool recursive, IEnumerable<int> timeouts)
+        protected override LockResult Lock(IDavStorable item, LockType lockType, LockScope lockScope, XElement owner, Uri lockRootUri, bool recursive, IEnumerable<int> timeouts)
         {
             // Determine the expiration based on the first time-out
             var timeout = timeouts.Cast<int?>().FirstOrDefault();
@@ -64,7 +64,7 @@ namespace NWebDav.Server.Locking
         }
 
         /// <inheritdoc/>
-        protected override HttpStatusCode Unlock(IStoreItem item, Uri lockTokenUri)
+        protected override HttpStatusCode Unlock(IDavStorable item, Uri lockTokenUri)
         {
             // Determine the actual lock token
             var lockToken = GetTokenFromLockToken(lockTokenUri);
@@ -116,7 +116,7 @@ namespace NWebDav.Server.Locking
         }
 
         /// <inheritdoc/>
-        protected override LockResult RefreshLock(IStoreItem item, bool recursiveLock, IEnumerable<int> timeouts, Uri lockTokenUri)
+        protected override LockResult RefreshLock(IDavStorable item, bool recursiveLock, IEnumerable<int> timeouts, Uri lockTokenUri)
         {
             // Determine the actual lock token
             var lockToken = GetTokenFromLockToken(lockTokenUri);
@@ -154,7 +154,7 @@ namespace NWebDav.Server.Locking
         }
 
         /// <inheritdoc/>
-        public override async IAsyncEnumerable<ActiveLock> GetActiveLockInfoAsync(IStoreItem item, [EnumeratorCancellation] CancellationToken cancellationToken)
+        public override async IAsyncEnumerable<ActiveLock> GetActiveLockInfoAsync(IDavStorable item, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
             cancellationToken.ThrowIfCancellationRequested();
@@ -180,14 +180,14 @@ namespace NWebDav.Server.Locking
         }
 
         /// <inheritdoc/>
-        protected override IEnumerable<LockEntry> GetSupportedLocks(IStoreItem item)
+        protected override IEnumerable<LockEntry> GetSupportedLocks(IDavStorable item)
         {
             // We support both shared and exclusive locks for items and collections
             return s_supportedLocks;
         }
 
         /// <inheritdoc/>
-        protected override bool IsLocked(IStoreItem item)
+        protected override bool IsLocked(IDavStorable item)
         {
             // Determine the item's key
             var key = item.Id;
@@ -210,7 +210,7 @@ namespace NWebDav.Server.Locking
         }
 
         /// <inheritdoc/>
-        protected override bool HasLock(IStoreItem item, Uri lockTokenUri)
+        protected override bool HasLock(IDavStorable item, Uri lockTokenUri)
         {
             // Determine the item's key
             var key = item.Id;
@@ -263,7 +263,7 @@ namespace NWebDav.Server.Locking
         {
             public Guid Token { get; }
 
-            public IStoreItem Item { get; }
+            public IDavStorable Item { get; }
 
             public LockType Type { get; }
 
@@ -281,7 +281,7 @@ namespace NWebDav.Server.Locking
 
             public bool IsExpired => !Expires.HasValue || Expires < DateTime.UtcNow;
 
-            public ItemLockInfo(IStoreItem item, LockType lockType, LockScope lockScope, Uri lockRootUri, bool recursive, XElement owner, int timeout)
+            public ItemLockInfo(IDavStorable item, LockType lockType, LockScope lockScope, Uri lockRootUri, bool recursive, XElement owner, int timeout)
             {
                 Token = Guid.NewGuid();
                 Item = item;

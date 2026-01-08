@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using NWebDav.Server.Helpers;
 using NWebDav.Server.Http;
+using NWebDav.Server.Storage;
 
 namespace NWebDav.Server.Stores
 {
@@ -21,18 +22,18 @@ namespace NWebDav.Server.Stores
             _root = root;
         }
 
-        public Task<IStoreItem?> GetItemAsync(Uri uri, CancellationToken cancellationToken)
+        public Task<IDavStorable?> GetItemAsync(Uri uri, CancellationToken cancellationToken)
         {
             if (!uri.LocalPath.StartsWith($"/{_remoteRootDirectory}"))
-                return Task.FromResult<IStoreItem>(null);
+                return Task.FromResult<IDavStorable?>(null);
 
             return _root.GetItemAsync(UriHelper.RemoveRootDirectory(uri, _remoteRootDirectory), cancellationToken);
         }
 
-        public Task<IStoreCollection?> GetCollectionAsync(Uri uri, CancellationToken cancellationToken)
+        public Task<IDavFolder?> GetCollectionAsync(Uri uri, CancellationToken cancellationToken)
         {
             if (!uri.LocalPath.StartsWith($"/{_remoteRootDirectory}"))
-                return Task.FromResult<IStoreCollection>(null);
+                return Task.FromResult<IDavFolder?>(null);
 
             return _root.GetCollectionAsync(UriHelper.RemoveRootDirectory(uri, _remoteRootDirectory), cancellationToken);
         }

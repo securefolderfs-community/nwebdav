@@ -1,5 +1,5 @@
 ﻿using NWebDav.Server.Http;
-using NWebDav.Server.Stores;
+using NWebDav.Server.Storage;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,13 +10,13 @@ using System.Xml.Linq;
 namespace NWebDav.Server.Props
 {
     public class OverridePropertyManager<TEntry> : IPropertyManager
-        where TEntry : IStoreItem
+        where TEntry : IDavStorable
     {
-        private readonly Func<TEntry, IStoreItem> _converter;
+        private readonly Func<TEntry, IDavStorable> _converter;
         private readonly IDictionary<XName, DavProperty<TEntry>> _properties;
         private readonly IPropertyManager _basePropertyManager;
 
-        public OverridePropertyManager(IEnumerable<DavProperty<TEntry>> properties, IPropertyManager basePropertyManager, Func<TEntry, IStoreItem> converter = null)
+        public OverridePropertyManager(IEnumerable<DavProperty<TEntry>> properties, IPropertyManager basePropertyManager, Func<TEntry, IDavStorable> converter = null)
         {
             // Convert the properties to a dictionary for fast retrieval
             _properties = properties?.ToDictionary(p => p.Name) ?? throw new ArgumentNullException(nameof(properties));
@@ -29,7 +29,7 @@ namespace NWebDav.Server.Props
 
         public IList<PropertyInfo> Properties { get; }
 
-        public Task<object> GetPropertyAsync(HttpListenerContext context, IStoreItem item, XName propertyName, bool skipExpensive = false)
+        public Task<object> GetPropertyAsync(HttpListenerContext context, IDavStorable item, XName propertyName, bool skipExpensive = false)
         {
             // Find the property
             if (!_properties.TryGetValue(propertyName, out var property))
@@ -47,7 +47,7 @@ namespace NWebDav.Server.Props
             return property.GetterAsync(context, (TEntry)item);
         }
 
-        public Task<HttpStatusCode> SetPropertyAsync(HttpListenerContext context, IStoreItem item, XName propertyName, object value)
+        public Task<HttpStatusCode> SetPropertyAsync(HttpListenerContext context, IDavStorable item, XName propertyName, object value)
         {
             // Find the property
             if (!_properties.TryGetValue(propertyName, out var property))

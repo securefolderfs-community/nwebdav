@@ -4,7 +4,7 @@ using System.Net;
 using System.Xml.Linq;
 
 using NWebDav.Server.Http;
-using NWebDav.Server.Stores;
+using NWebDav.Server.Storage;
 
 namespace NWebDav.Server.Props
 {
@@ -18,7 +18,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public class Win32CreationTime<TEntry> : DavRfc1123Date<TEntry> where TEntry : IStoreItem
+    public class Win32CreationTime<TEntry> : DavRfc1123Date<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Name of the property (static).
@@ -43,7 +43,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public class Win32LastAccessTime<TEntry> : DavRfc1123Date<TEntry> where TEntry : IStoreItem
+    public class Win32LastAccessTime<TEntry> : DavRfc1123Date<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Name of the property (static).
@@ -68,7 +68,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public class Win32LastModifiedTime<TEntry> : DavRfc1123Date<TEntry> where TEntry : IStoreItem
+    public class Win32LastModifiedTime<TEntry> : DavRfc1123Date<TEntry> where TEntry : IDavStorable
     {
         /// <summary>
         /// Name of the property (static).
@@ -123,7 +123,7 @@ namespace NWebDav.Server.Props
     /// <typeparam name="TEntry">
     /// Store item or collection to which this DAV property applies.
     /// </typeparam>
-    public class Win32FileAttributes<TEntry> : DavTypedProperty<TEntry, FileAttributes> where TEntry : IStoreItem
+    public class Win32FileAttributes<TEntry> : DavTypedProperty<TEntry, FileAttributes> where TEntry : IDavStorable
     {
         private class FileAttributesConverter : IConverter
         {
