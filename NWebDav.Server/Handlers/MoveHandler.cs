@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -140,9 +140,18 @@ namespace NWebDav.Server.Handlers
                     await MoveAsync(moveCollection, (IStoreItem)entry, newCollectionResult.Collection, ((IStoreItem)entry).Name, overwrite, subBaseUri, errors, cancellationToken).ConfigureAwait(false);
 
                 // Delete the source collection
-                var deleteResult = await sourceCollection.DavDeleteAsync(moveItem, cancellationToken).ConfigureAwait(false);
-                if (deleteResult != HttpStatusCode.OK)
-                    errors.AddResult(subBaseUri, newCollectionResult.Result);
+                try
+                {
+                    await sourceCollection.DeleteAsync(moveItem, cancellationToken).ConfigureAwait(false);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    errors.AddResult(subBaseUri, HttpStatusCode.Forbidden);
+                }
+                catch (HttpListenerException ex)
+                {
+                    errors.AddResult(subBaseUri, (HttpStatusCode)ex.ErrorCode);
+                }
             }
             else
             {

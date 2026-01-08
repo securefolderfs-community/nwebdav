@@ -27,6 +27,9 @@ namespace NWebDav.Server.Stores
         /// <inheritdoc/>
         public virtual string Name { get; }
 
+        /// <inheritdoc/>
+        public EnumerationDepthMode DepthMode => EnumerationDepthMode.Rejected;
+
         public DiskStoreCollection(ILockingManager lockingManager, DirectoryInfo directoryInfo, bool isWritable)
         {
             _directoryInfo = directoryInfo;
@@ -35,7 +38,6 @@ namespace NWebDav.Server.Stores
             LockingManager = lockingManager;
             IsWritable = isWritable;
         }
-
 
         /// <inheritdoc/>
         public virtual async IAsyncEnumerable<IStorableChild> GetItemsAsync(StorableType type = StorableType.All, [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -79,14 +81,20 @@ namespace NWebDav.Server.Stores
         }
 
         /// <inheritdoc/>
+        public Task<IFolderWatcher> GetFolderWatcherAsync(CancellationToken cancellationToken = new CancellationToken())
+        {
+            // Folder watcher in WebDav is not supported
+            throw new NotSupportedException();
+        }
+
+        /// <inheritdoc/>
         public Task<IFolder?> GetParentAsync(CancellationToken cancellationToken = default)
         {
             var parentDirectory = _directoryInfo.Parent;
             if (parentDirectory is null)
                 return Task.FromResult<IFolder?>(null);
 
-            return Task.FromResult<IFolder?>(null);
-            //return Task.FromResult<IFolder?>(new DiskStoreCollection(LockingManager, parentDirectory, IsWritable));
+            return Task.FromResult<IFolder?>(new DiskStoreCollection(LockingManager, parentDirectory, IsWritable));
         }
 
         /// <inheritdoc/>
@@ -182,7 +190,7 @@ namespace NWebDav.Server.Stores
                     var result = await storeItem.CopyAsync(destinationCollection, destinationName, overwrite, cancellationToken).ConfigureAwait(false);
                     if (result.Result == HttpStatusCode.Created || result.Result == HttpStatusCode.NoContent)
                     {
-                        await DeleteAsync_Dav(storeItem, cancellationToken).ConfigureAwait(false);
+                        await DeleteAsync(storeItem, cancellationToken).ConfigureAwait(false);
                         return result.Item!;
                     }
                     else
@@ -198,7 +206,7 @@ namespace NWebDav.Server.Stores
         }
 
         /// <inheritdoc/>
-        public virtual async Task DeleteAsync_Dav(IStoreItem storeItem, CancellationToken cancellationToken)
+        public virtual async Task DeleteAsync(IStorableChild item, CancellationToken cancellationToken = default)
         {
             await Task.CompletedTask;
 
@@ -207,7 +215,7 @@ namespace NWebDav.Server.Stores
                 throw new HttpListenerException((int)HttpStatusCode.PreconditionFailed);
 
             // Determine the full path
-            var fullPath = Path.Combine(_directoryInfo.FullName, storeItem.Name);
+            var fullPath = Path.Combine(_directoryInfo.FullName, item.Name);
             try
             {
                 // Check if the file exists
@@ -240,6 +248,21 @@ namespace NWebDav.Server.Stores
                 //s_log.Log(LogLevel.Error, () => $"Unable to delete '{fullPath}' directory.", exc);
                 throw new HttpListenerException((int)HttpStatusCode.InternalServerError);
             }
+        }
+
+
+        /// <inheritdoc/>
+        public Task<IChildFolder> CreateFolderAsync(string name, bool overwrite = false,
+            CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<IChildFile> CreateFileAsync(string name, bool overwrite = false,
+            CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
         }
 
         protected virtual IStoreFile NewFile(string id)
@@ -469,7 +492,5 @@ namespace NWebDav.Server.Stores
             // We can only move disk-store collections
             return destination is DiskStoreCollection;
         }
-
-        public EnumerationDepthMode DepthMode => EnumerationDepthMode.Rejected;
     }
 }

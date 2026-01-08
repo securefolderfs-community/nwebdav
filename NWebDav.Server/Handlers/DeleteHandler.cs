@@ -110,7 +110,19 @@ namespace NWebDav.Server.Handlers
             }
 
             // Attempt to delete the item
-            return await collection.DavDeleteAsync(deleteItem, cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await collection.DeleteAsync(deleteItem, cancellationToken).ConfigureAwait(false);
+                return HttpStatusCode.OK;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return HttpStatusCode.Forbidden;
+            }
+            catch (HttpListenerException ex)
+            {
+                return (HttpStatusCode)ex.ErrorCode;
+            }
         }
     }
 }

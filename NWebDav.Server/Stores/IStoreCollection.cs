@@ -6,12 +6,8 @@ namespace NWebDav.Server.Stores
 {
     public interface IStoreCollection : IStoreItem, IDavFolder
     {
-
         // TODO: ISupportsMove
         Task<IStoreItem> MoveItemAsync_Dav(IStoreItem storeItem, IStoreCollection destination, string destinationName, bool overwrite, CancellationToken cancellationToken = default);
-
-        // TODO: IModifiableFolder
-        Task DeleteAsync_Dav(IStoreItem storeItem, CancellationToken cancellationToken = default);
 
 
         // Create items and collections and add to the collection
