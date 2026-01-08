@@ -1,15 +1,13 @@
-﻿using NWebDav.Server.Helpers;
-using NWebDav.Server.Http;
-using NWebDav.Server.Locking;
-using NWebDav.Server.Props;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Net.Http;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using NWebDav.Server.Helpers;
+using NWebDav.Server.Locking;
+using NWebDav.Server.Props;
 using OwlCore.Storage;
 
 namespace NWebDav.Server.Stores

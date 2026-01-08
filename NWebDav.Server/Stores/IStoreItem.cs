@@ -1,12 +1,12 @@
-﻿using NWebDav.Server.Locking;
-using NWebDav.Server.Props;
-using OwlCore.Storage;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
+using NWebDav.Server.Locking;
+using NWebDav.Server.Props;
+using NWebDav.Server.Storage;
 
 namespace NWebDav.Server.Stores
 {
-    public interface IStoreItem : IStorable // TODO(wd): Replace with IDavFile, IDavStorable
+    public interface IStoreItem : IDavStorable
     {
         // Property support
         IPropertyManager PropertyManager { get; }
