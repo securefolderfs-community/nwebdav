@@ -7,7 +7,7 @@ namespace NWebDav.Server.Storage
     /// Represents a WebDAV folder.
     /// </summary>
     // TODO: Implement interfaces
-    public interface IDavFolder : IDavStorable, IChildFolder//, IModifiableFolder, IGetItem, IGetItemRecursive, IGetFirstByName
+    public interface IDavFolder : IDavStorable, IChildFolder, IGetFirstByName//, IModifiableFolder, IGetItem, IGetItemRecursive
     {
         /// <summary>
         /// Gets the depth mode for enumerating directory contents.

@@ -90,7 +90,7 @@ namespace NWebDav.Server.Stores
         }
 
         /// <inheritdoc/>
-        public virtual async Task<IStoreItem> GetFirstByNameAsync_Dav(string name, CancellationToken cancellationToken)
+        public virtual async Task<IStorableChild> GetFirstByNameAsync(string name, CancellationToken cancellationToken = default)
         {
             await Task.CompletedTask;
             cancellationToken.ThrowIfCancellationRequested();

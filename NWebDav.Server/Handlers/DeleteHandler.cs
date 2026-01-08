@@ -1,13 +1,14 @@
-﻿﻿using Microsoft.Extensions.Logging;
-using NWebDav.Server.Extensions;
-using NWebDav.Server.Helpers;
-using NWebDav.Server.Stores;
-using OwlCore.Storage;
-using System;
+﻿using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Microsoft.Extensions.Logging;
+using NWebDav.Server.Extensions;
+using NWebDav.Server.Helpers;
+using NWebDav.Server.Stores;
+using OwlCore.Storage;
+using SecureFolderFS.Storage.Extensions;
 
 namespace NWebDav.Server.Handlers
 {
@@ -53,7 +54,7 @@ namespace NWebDav.Server.Handlers
             }
 
             // Obtain the item that actually is deleted
-            var deleteItem = await parentCollection.TryGetFirstByNameAsync(splitUri.Name, cancellationToken).ConfigureAwait(false);
+            var deleteItem = (IStoreItem?)await parentCollection.TryGetFirstByNameAsync(splitUri.Name, cancellationToken).ConfigureAwait(false);
             if (deleteItem is null)
             {
                 // Source not found
@@ -97,7 +98,7 @@ namespace NWebDav.Server.Handlers
         private async Task<HttpStatusCode> DeleteItemAsync(IStoreCollection collection, string name, Uri baseUri, CancellationToken cancellationToken)
         {
             // Obtain the actual item
-            var deleteItem = await collection.TryGetFirstByNameAsync(name, cancellationToken).ConfigureAwait(false);
+            var deleteItem = (IStoreItem?)await collection.TryGetFirstByNameAsync(name, cancellationToken).ConfigureAwait(false);
             if (deleteItem is IStoreCollection deleteCollection)
             {
                 // Determine the new base URI

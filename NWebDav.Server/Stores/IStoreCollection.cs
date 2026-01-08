@@ -7,9 +7,6 @@ namespace NWebDav.Server.Stores
     public interface IStoreCollection : IStoreItem, IDavFolder
     {
 
-        // TODO: IGetFirstByName
-        Task<IStoreItem> GetFirstByNameAsync_Dav(string name, CancellationToken cancellationToken = default);
-
         // TODO: ISupportsMove
         Task<IStoreItem> MoveItemAsync_Dav(IStoreItem storeItem, IStoreCollection destination, string destinationName, bool overwrite, CancellationToken cancellationToken = default);
 

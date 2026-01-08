@@ -1,13 +1,14 @@
-﻿﻿using Microsoft.Extensions.Logging;
-using NWebDav.Server.Extensions;
-using NWebDav.Server.Helpers;
-using NWebDav.Server.Stores;
-using OwlCore.Storage;
-using System;
+﻿using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Microsoft.Extensions.Logging;
+using NWebDav.Server.Extensions;
+using NWebDav.Server.Helpers;
+using NWebDav.Server.Stores;
+using OwlCore.Storage;
+using SecureFolderFS.Storage.Extensions;
 
 namespace NWebDav.Server.Handlers
 {
@@ -45,7 +46,7 @@ namespace NWebDav.Server.Handlers
             }
 
             // Obtain the item to move
-            var moveItem = await sourceCollection.TryGetFirstByNameAsync(splitSourceUri.Name, cancellationToken).ConfigureAwait(false);
+            var moveItem = (IStoreItem?)await sourceCollection.TryGetFirstByNameAsync(splitSourceUri.Name, cancellationToken).ConfigureAwait(false);
             if (moveItem is null)
             {
                 // Source not found
