@@ -2,13 +2,12 @@
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using NWebDav.Server.Storage;
 
 namespace NWebDav.Server.Stores
 {
-    public interface IStoreFile : IStoreItem
+    public interface IStoreFile : IStoreItem, IDavFile
     {
-        // Read/Write access to the data
-        Task<Stream> GetReadableStreamAsync(CancellationToken cancellationToken);
 
         Task<HttpStatusCode> UploadFromStreamAsync(Stream source, CancellationToken cancellationToken);
     }

@@ -9,6 +9,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using OwlCore.Storage;
 
 namespace NWebDav.Server.Stores
 {
@@ -17,11 +18,42 @@ namespace NWebDav.Server.Stores
     {
         private readonly FileInfo _fileInfo;
 
+        /// <inheritdoc/>
+        public string Name => _fileInfo.Name;
+
+        /// <inheritdoc/>
+        public string Id => _fileInfo.FullName;
+
         public DiskStoreFile(ILockingManager lockingManager, FileInfo fileInfo, bool isWritable)
         {
             LockingManager = lockingManager;
             _fileInfo = fileInfo;
             IsWritable = isWritable;
+        }
+
+        /// <inheritdoc/>
+        public Task<Stream> OpenStreamAsync(FileAccess accessMode, CancellationToken cancellationToken = default)
+        {
+            var stream = accessMode switch
+            {
+                FileAccess.Read => _fileInfo.OpenRead(),
+                FileAccess.Write => _fileInfo.OpenWrite(),
+                FileAccess.ReadWrite => _fileInfo.Open(FileMode.OpenOrCreate, FileAccess.ReadWrite),
+                _ => throw new ArgumentOutOfRangeException(nameof(accessMode), accessMode, null)
+            };
+
+            return Task.FromResult<Stream>(stream);
+        }
+
+        /// <inheritdoc/>
+        public Task<IFolder?> GetParentAsync(CancellationToken cancellationToken = default)
+        {
+            var parentDirectory = _fileInfo.Directory;
+            if (parentDirectory is null)
+                return Task.FromResult<IFolder?>(null);
+
+            return Task.FromResult<IFolder?>(null);
+            //return Task.FromResult<IFolder?>(new DiskStoreCollection(LockingManager, parentDirectory, IsWritable));
         }
 
         public static PropertyManager<DiskStoreFile> DefaultPropertyManager { get; } = new PropertyManager<DiskStoreFile>(new DavProperty<DiskStoreFile>[]
@@ -120,9 +152,6 @@ namespace NWebDav.Server.Stores
         });
 
         public bool IsWritable { get; }
-        public string Name => _fileInfo.Name;
-        public string Id => _fileInfo.FullName;
-        public Task<Stream> GetReadableStreamAsync(CancellationToken cancellationToken) => Task.FromResult((Stream)_fileInfo.OpenRead());
 
         public async Task<HttpStatusCode> UploadFromStreamAsync(Stream inputStream, CancellationToken cancellationToken)
         {
@@ -184,7 +213,7 @@ namespace NWebDav.Server.Stores
                     {
                         if (result.Item is IStoreFile storeFile)
                         {
-                            using (var sourceStream = await GetReadableStreamAsync(cancellationToken).ConfigureAwait(false))
+                            using (var sourceStream = await OpenStreamAsync(FileAccess.Read, cancellationToken).ConfigureAwait(false))
                             {
                                 var copyResult = await storeFile.UploadFromStreamAsync(sourceStream, cancellationToken).ConfigureAwait(false);
                                 if (copyResult != HttpStatusCode.OK)
