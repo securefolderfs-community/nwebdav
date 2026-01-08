@@ -52,8 +52,7 @@ namespace NWebDav.Server.Stores
             if (parentDirectory is null)
                 return Task.FromResult<IFolder?>(null);
 
-            return Task.FromResult<IFolder?>(null);
-            //return Task.FromResult<IFolder?>(new DiskStoreCollection(LockingManager, parentDirectory, IsWritable));
+            return Task.FromResult<IFolder?>(new DiskStoreCollection(LockingManager, parentDirectory, IsWritable));
         }
 
         public static PropertyManager<DiskStoreFile> DefaultPropertyManager { get; } = new PropertyManager<DiskStoreFile>(new DavProperty<DiskStoreFile>[]
