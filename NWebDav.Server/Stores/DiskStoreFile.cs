@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -10,6 +10,7 @@ using NWebDav.Server.Locking;
 using NWebDav.Server.Props;
 using NWebDav.Server.Storage;
 using OwlCore.Storage;
+using SecureFolderFS.Shared.ComponentModel;
 
 namespace NWebDav.Server.Stores
 {
@@ -23,6 +24,9 @@ namespace NWebDav.Server.Stores
 
         /// <inheritdoc/>
         public string Id => _fileInfo.FullName;
+
+        /// <inheritdoc/>
+        IFile? IWrapper<IFile>.Inner => null;
 
         public DiskStoreFile(ILockingManager lockingManager, FileInfo fileInfo, bool isWritable)
         {

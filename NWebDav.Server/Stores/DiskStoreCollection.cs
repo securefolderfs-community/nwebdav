@@ -1,8 +1,9 @@
-﻿using NWebDav.Server.Enums;
+﻿﻿using NWebDav.Server.Enums;
 using NWebDav.Server.Locking;
 using NWebDav.Server.Props;
 using NWebDav.Server.Storage;
 using OwlCore.Storage;
+using SecureFolderFS.Shared.ComponentModel;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -30,6 +31,9 @@ namespace NWebDav.Server.Stores
 
         /// <inheritdoc/>
         public EnumerationDepthMode DepthMode => EnumerationDepthMode.Rejected;
+
+        /// <inheritdoc/>
+        IFolder? IWrapper<IFolder>.Inner => null;
 
         public DiskStoreCollection(ILockingManager lockingManager, DirectoryInfo directoryInfo, bool isWritable)
         {
