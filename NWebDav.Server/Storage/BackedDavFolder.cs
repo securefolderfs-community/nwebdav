@@ -12,7 +12,6 @@ using NWebDav.Server.Locking;
 using NWebDav.Server.Props;
 using NWebDav.Server.Stores;
 using OwlCore.Storage;
-using SecureFolderFS.Shared.ComponentModel;
 using SecureFolderFS.Shared.Extensions;
 
 namespace NWebDav.Server.Storage
@@ -29,9 +28,6 @@ namespace NWebDav.Server.Storage
         /// Gets the inner backing storage folder.
         /// </summary>
         public IFolder Inner { get; }
-
-        /// <inheritdoc/>
-        IFolder? IWrapper<IFolder>.Inner => Inner;
 
         /// <inheritdoc/>
         public virtual string Id => Inner.Id;
@@ -56,7 +52,7 @@ namespace NWebDav.Server.Storage
         /// <summary>
         /// Gets the default property manager for <see cref="BackedDavFolder"/>.
         /// </summary>
-        public static PropertyManager<BackedDavFolder> DefaultPropertyManager { get; } = new PropertyManager<BackedDavFolder>(new DavProperty<BackedDavFolder>[]
+        public static PropertyManager<BackedDavFolder> DefaultPropertyManager { get; } = new(new DavProperty<BackedDavFolder>[]
         {
             // RFC-2518 properties
             new DavDisplayName<BackedDavFolder>
@@ -254,25 +250,8 @@ namespace NWebDav.Server.Storage
             try
             {
                 // Try to find the item to delete
-                if (Inner is IGetFirstByName getFirstByName)
-                {
-                    var itemToDelete = await getFirstByName.GetFirstByNameAsync(item.Name, cancellationToken).ConfigureAwait(false);
-                    await modifiableFolder.DeleteAsync(itemToDelete, cancellationToken).ConfigureAwait(false);
-                }
-                else
-                {
-                    // Fallback: try to delete by iterating items
-                    await foreach (var child in Inner.GetItemsAsync(StorableType.All, cancellationToken).ConfigureAwait(false))
-                    {
-                        if (child.Name == item.Name)
-                        {
-                            await modifiableFolder.DeleteAsync(child, cancellationToken).ConfigureAwait(false);
-                            return;
-                        }
-                    }
-
-                    throw new HttpListenerException((int)HttpStatusCode.NotFound);
-                }
+                var itemToDelete = await Inner.GetFirstByNameAsync(item.Name, cancellationToken).ConfigureAwait(false);
+                await modifiableFolder.DeleteAsync(itemToDelete, cancellationToken).ConfigureAwait(false);
             }
             catch (FileNotFoundException)
             {
@@ -306,24 +285,21 @@ namespace NWebDav.Server.Storage
             try
             {
                 // Check if the folder already exists and handle overwrite
-                if (Inner is IGetFirstByName getFirstByName)
+                try
                 {
-                    try
+                    var existing = await Inner.GetFirstByNameAsync(name, cancellationToken).ConfigureAwait(false);
+                    if (existing is IFolder)
                     {
-                        var existing = await getFirstByName.GetFirstByNameAsync(name, cancellationToken).ConfigureAwait(false);
-                        if (existing is IFolder)
-                        {
-                            if (!overwrite)
-                                throw new HttpListenerException((int)HttpStatusCode.PreconditionFailed);
+                        if (!overwrite)
+                            throw new HttpListenerException((int)HttpStatusCode.PreconditionFailed);
 
-                            // Delete existing folder if overwrite is allowed
-                            await modifiableFolder.DeleteAsync(existing, cancellationToken).ConfigureAwait(false);
-                        }
+                        // Delete existing folder if overwrite is allowed
+                        await modifiableFolder.DeleteAsync(existing, cancellationToken).ConfigureAwait(false);
                     }
-                    catch (FileNotFoundException)
-                    {
-                        // Item doesn't exist, which is fine
-                    }
+                }
+                catch (FileNotFoundException)
+                {
+                    // Item doesn't exist, which is fine
                 }
 
                 // Create the folder
@@ -357,24 +333,21 @@ namespace NWebDav.Server.Storage
             try
             {
                 // Check if the file already exists and handle overwrite
-                if (Inner is IGetFirstByName getFirstByName)
+                try
                 {
-                    try
+                    var existing = await Inner.GetFirstByNameAsync(name, cancellationToken).ConfigureAwait(false);
+                    if (existing is IFile)
                     {
-                        var existing = await getFirstByName.GetFirstByNameAsync(name, cancellationToken).ConfigureAwait(false);
-                        if (existing is IFile)
-                        {
-                            if (!overwrite)
-                                throw new HttpListenerException((int)HttpStatusCode.PreconditionFailed);
+                        if (!overwrite)
+                            throw new HttpListenerException((int)HttpStatusCode.PreconditionFailed);
 
-                            // Delete existing file if overwrite is allowed
-                            await modifiableFolder.DeleteAsync(existing, cancellationToken).ConfigureAwait(false);
-                        }
+                        // Delete existing file if overwrite is allowed
+                        await modifiableFolder.DeleteAsync(existing, cancellationToken).ConfigureAwait(false);
                     }
-                    catch (FileNotFoundException)
-                    {
-                        // Item doesn't exist, which is fine
-                    }
+                }
+                catch (FileNotFoundException)
+                {
+                    // Item doesn't exist, which is fine
                 }
 
                 // Create the file
@@ -445,6 +418,7 @@ namespace NWebDav.Server.Storage
         {
             if (obj is not BackedDavFolder other)
                 return false;
+
             return other.Id.Equals(Id, StringComparison.CurrentCultureIgnoreCase);
         }
     }

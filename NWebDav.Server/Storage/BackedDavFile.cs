@@ -9,7 +9,6 @@ using NWebDav.Server.Locking;
 using NWebDav.Server.Props;
 using NWebDav.Server.Stores;
 using OwlCore.Storage;
-using SecureFolderFS.Shared.ComponentModel;
 using SecureFolderFS.Shared.Extensions;
 using SecureFolderFS.Storage.Extensions;
 
@@ -25,9 +24,6 @@ namespace NWebDav.Server.Storage
         /// Gets the inner backing storage file.
         /// </summary>
         public IFile Inner { get; }
-
-        /// <inheritdoc/>
-        IFile? IWrapper<IFile>.Inner => Inner;
 
         /// <inheritdoc/>
         public string Name => Inner.Name;
@@ -49,7 +45,7 @@ namespace NWebDav.Server.Storage
         /// <summary>
         /// Gets the default property manager for <see cref="BackedDavFile"/>.
         /// </summary>
-        public static PropertyManager<BackedDavFile> DefaultPropertyManager { get; } = new PropertyManager<BackedDavFile>(new DavProperty<BackedDavFile>[]
+        public static PropertyManager<BackedDavFile> DefaultPropertyManager { get; } = new(new DavProperty<BackedDavFile>[]
         {
             // RFC-2518 properties
             new DavCreationDate<BackedDavFile>
@@ -230,7 +226,6 @@ namespace NWebDav.Server.Storage
             return MimeTypeHelper.GetMimeType(Name);
         }
 
-
         /// <inheritdoc/>
         public override int GetHashCode()
         {
@@ -242,6 +237,7 @@ namespace NWebDav.Server.Storage
         {
             if (obj is not BackedDavFile other)
                 return false;
+
             return other.Id.Equals(Id, StringComparison.CurrentCultureIgnoreCase);
         }
     }
