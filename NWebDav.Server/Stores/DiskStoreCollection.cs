@@ -1,4 +1,4 @@
-﻿﻿using NWebDav.Server.Enums;
+﻿using NWebDav.Server.Enums;
 using NWebDav.Server.Locking;
 using NWebDav.Server.Props;
 using NWebDav.Server.Storage;
