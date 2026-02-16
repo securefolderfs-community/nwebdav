@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -87,6 +88,10 @@ namespace NWebDav.Server.Storage
             new DavSupportedLockDefault<BackedDavFolder>(),
 
             // Hopmann/Lippert collection properties
+            new DavExtCollectionChildCount<BackedDavFolder>()
+            {
+                Getter = (context, collection) => collection.GetItemsAsync().ToArrayAsyncImpl().GetAwaiter().GetResult().Length
+            },
             new DavExtCollectionIsFolder<BackedDavFolder>
             {
                 Getter = (context, collection) => true
@@ -106,6 +111,23 @@ namespace NWebDav.Server.Storage
             new DavExtCollectionReserved<BackedDavFolder>
             {
                 Getter = (context, collection) => !collection.IsWritable
+            },
+            new DavExtCollectionHasSubs<BackedDavFolder>
+            {
+                Getter = (context, collection) => collection.GetItemsAsync(StorableType.Folder).AnyAsyncImpl().GetAwaiter().GetResult()
+            },
+            new DavExtCollectionObjectCount<BackedDavFolder>
+            {
+                Getter = (context, collection) => collection.GetItemsAsync(StorableType.File).ToArrayAsyncImpl().GetAwaiter().GetResult().Length
+            },
+            new DavExtCollectionVisibleCount<BackedDavFolder>
+            {
+                Getter = (context, collection) =>
+                {
+                    var items = collection.GetItemsAsync().ToArrayAsyncImpl().GetAwaiter().GetResult();
+                    return items.OfType<IDavFolder>().Count(folder => (new DirectoryInfo(folder.GetDeepestWrapper().Inner.Id).Attributes & FileAttributes.Hidden) == 0) +
+                           items.OfType<IDavFile>().Count(file => (new FileInfo(file.GetDeepestWrapper().Inner.Id).Attributes & FileAttributes.Hidden) == 0);
+                }
             },
 
             // Win32 extensions
