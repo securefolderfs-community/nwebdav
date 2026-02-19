@@ -9,16 +9,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using NWebDav.Server.Enums;
+using NWebDav.Server.Helpers;
 using NWebDav.Server.Locking;
 using NWebDav.Server.Props;
-using NWebDav.Server.Stores;
 using OwlCore.Storage;
+using SecureFolderFS.Shared.ComponentModel;
 using SecureFolderFS.Shared.Extensions;
+using SecureFolderFS.Storage.Extensions;
+using SecureFolderFS.Storage.Recyclable;
 
 namespace NWebDav.Server.Storage
 {
     /// <summary>
-    /// A WebDAV folder backed by an <see cref="IFolder"/> instance.
+    /// A WebDAV folder backed by an <see cref="OwlCore.Storage.IFolder"/> instance.
     /// </summary>
     [DebuggerDisplay("{Inner.Name}\\")]
     public class BackedDavFolder : IDavFolder
@@ -233,29 +236,69 @@ namespace NWebDav.Server.Storage
         }
 
         /// <inheritdoc/>
-        public virtual async Task<IDavStorable> MoveItemAsync(IDavStorable item, IDavFolder destination, string destinationName, bool overwrite, CancellationToken cancellationToken = default)
+        public Task<IChildFile> CreateCopyOfAsync(IFile fileToCopy, bool overwrite, CancellationToken cancellationToken,
+            CreateCopyOfDelegate fallback)
+        {
+            return CreateCopyOfAsync(fileToCopy, overwrite, fileToCopy.Name, cancellationToken, (mf, f, ov, _, ct) => fallback(mf, f, ov, ct));
+        }
+
+        /// <inheritdoc/>
+        public async Task<IChildFile> CreateCopyOfAsync(IFile fileToCopy, bool overwrite, string newName, CancellationToken cancellationToken, CreateRenamedCopyOfDelegate fallback)
         {
             // Return error
-            if (!IsWritable)
+            if (!IsWritable
+                || Inner is not IModifiableFolder innerModifiableFolder
+                || fileToCopy is not IWrapper<IFile> { Inner: IChildFile innerFile })
                 throw new HttpListenerException((int)HttpStatusCode.PreconditionFailed);
 
             try
             {
-                // Attempt to copy the item to the destination collection
-                var result = await item.CopyAsync(destination, destinationName, overwrite, cancellationToken).ConfigureAwait(false);
-                if (result.Result == HttpStatusCode.Created || result.Result == HttpStatusCode.NoContent)
-                {
-                    await DeleteAsync(item, cancellationToken).ConfigureAwait(false);
-                    return result.Item!;
-                }
-                else
-                {
-                    throw new HttpListenerException((int)result.Result);
-                }
+                // Attempt to move the item to the destination collection
+                var copiedFile = await innerModifiableFolder.CreateCopyOfAsync(innerFile, overwrite, newName, cancellationToken);
+                return NewFile(copiedFile);
+            }
+            catch (IOException ioException) when (ioException.IsDiskFull())
+            {
+                throw new HttpListenerException((int)HttpStatusCode.InsufficientStorage);
             }
             catch (UnauthorizedAccessException)
             {
                 throw new HttpListenerException((int)HttpStatusCode.Forbidden);
+            }
+        }
+
+        /// <inheritdoc/>
+        public Task<IChildFile> MoveFromAsync(IChildFile fileToMove, IModifiableFolder source, bool overwrite, CancellationToken cancellationToken,
+            MoveFromDelegate fallback)
+        {
+            return MoveFromAsync(fileToMove, source, overwrite, fileToMove.Name, cancellationToken, (mf, f, src, ov, _, ct) => fallback(mf, f, src, ov, ct));
+        }
+
+        /// <inheritdoc/>
+        public async Task<IChildFile> MoveFromAsync(IChildFile fileToMove, IModifiableFolder source, bool overwrite, string newName,
+            CancellationToken cancellationToken, MoveRenamedFromDelegate fallback)
+        {
+            try
+            {
+                if (Inner is not IMoveRenamedFrom innerMoveRenamedFrom
+                    || fileToMove is not IWrapper<IFile> { Inner: IChildFile innerFile }
+                    || source is not IWrapper<IFolder> { Inner: IModifiableFolder innerSource })
+                    return await fallback(this, fileToMove, source, overwrite, newName, cancellationToken).ConfigureAwait(false);
+
+                var movedFile = await innerMoveRenamedFrom.MoveFromAsync(innerFile, innerSource, overwrite, newName, cancellationToken).ConfigureAwait(false);
+                return NewFile(movedFile);
+            }
+            catch (NotSupportedException)
+            {
+                throw new HttpListenerException((int)HttpStatusCode.PreconditionFailed);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw new HttpListenerException((int)HttpStatusCode.Forbidden);
+            }
+            catch (Exception)
+            {
+                throw new HttpListenerException((int)HttpStatusCode.InternalServerError);
             }
         }
 
@@ -295,6 +338,42 @@ namespace NWebDav.Server.Storage
         }
 
         /// <inheritdoc/>
+        public async Task DeleteAsync(IStorableChild item, long sizeHint = -1L, bool deleteImmediately = false,
+            CancellationToken cancellationToken = default)
+        {
+            if (Inner is IRecyclableFolder recyclableFolder)
+            {
+                try
+                {
+                    // Try to find the item to delete
+                    var itemToDelete = await Inner.GetFirstByNameAsync(item.Name, cancellationToken).ConfigureAwait(false);
+                    await recyclableFolder.DeleteAsync(itemToDelete, sizeHint, deleteImmediately, cancellationToken).ConfigureAwait(false);
+                }
+                catch (FileNotFoundException)
+                {
+                    throw new HttpListenerException((int)HttpStatusCode.NotFound);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    throw new HttpListenerException((int)HttpStatusCode.Forbidden);
+                }
+                catch (HttpListenerException)
+                {
+                    throw;
+                }
+                catch (Exception)
+                {
+                    // TODO(wd): Add logging
+                    throw new HttpListenerException((int)HttpStatusCode.InternalServerError);
+                }
+            }
+            else
+            {
+                await DeleteAsync(item, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        /// <inheritdoc/>
         public virtual async Task<IChildFolder> CreateFolderAsync(string name, bool overwrite = false, CancellationToken cancellationToken = default)
         {
             // Return error
@@ -315,8 +394,8 @@ namespace NWebDav.Server.Storage
                         if (!overwrite)
                             throw new HttpListenerException((int)HttpStatusCode.PreconditionFailed);
 
-                        // Delete existing folder if overwrite is allowed
-                        await modifiableFolder.DeleteAsync(existing, cancellationToken).ConfigureAwait(false);
+                        // Delete the existing folder if overwrite is allowed
+                        await modifiableFolder.DeleteAsync(existing, deleteImmediately: true, cancellationToken: cancellationToken).ConfigureAwait(false);
                     }
                 }
                 catch (FileNotFoundException)
@@ -363,8 +442,8 @@ namespace NWebDav.Server.Storage
                         if (!overwrite)
                             throw new HttpListenerException((int)HttpStatusCode.PreconditionFailed);
 
-                        // Delete existing file if overwrite is allowed
-                        await modifiableFolder.DeleteAsync(existing, cancellationToken).ConfigureAwait(false);
+                        // Delete the existing file if overwrite is allowed
+                        await modifiableFolder.DeleteAsync(existing, deleteImmediately: true, cancellationToken: cancellationToken).ConfigureAwait(false);
                     }
                 }
                 catch (FileNotFoundException)
@@ -391,26 +470,11 @@ namespace NWebDav.Server.Storage
         }
 
         /// <inheritdoc/>
-        public virtual async Task<StoreItemResult> CopyAsync(IDavFolder destination, string name, bool overwrite, CancellationToken cancellationToken)
-        {
-            // Just create the folder itself
-            try
-            {
-                var result = await destination.CreateFolderAsync(name, overwrite, cancellationToken).ConfigureAwait(false);
-                return new StoreItemResult(HttpStatusCode.Created, (IDavStorable)result);
-            }
-            catch (HttpListenerException ex)
-            {
-                return new StoreItemResult((HttpStatusCode)ex.ErrorCode);
-            }
-        }
-
-        /// <inheritdoc/>
         public virtual bool SupportsFastMove(IDavFolder destination, string destinationName, bool overwrite)
         {
             // Fast move is only supported if both source and destination are backed by the same type
             // and the inner folder supports IMoveFrom or similar
-            return false;
+            return true;
         }
 
         /// <summary>

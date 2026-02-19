@@ -1,11 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
-using NWebDav.Server.Http;
-using NWebDav.Server.Stores;
-using OwlCore.Storage;
-using System;
+﻿using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using NWebDav.Server.Storage;
 
 namespace NWebDav.Server
 {
@@ -44,6 +42,6 @@ namespace NWebDav.Server
         /// A <see cref="Task"/> that represents the asynchronous operation. If the request was not handled - i.e. <see cref="NotImplementedException"/> was thrown,
         /// then the status code <see cref="HttpStatusCode.NotImplemented"/> is returned to the requester.
         /// </returns>
-        Task HandleRequestAsync(HttpListenerContext context, IStore store, ILogger? logger = null, CancellationToken cancellationToken = default); 
+        Task HandleRequestAsync(HttpListenerContext context, IStore store, ILogger? logger = null, CancellationToken cancellationToken = default);
     }
 }

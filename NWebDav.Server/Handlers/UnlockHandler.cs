@@ -1,11 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
-using NWebDav.Server.Helpers;
-using NWebDav.Server.Http;
-using NWebDav.Server.Stores;
-using OwlCore.Storage;
-using System.Net;
+﻿using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using NWebDav.Server.Helpers;
+using NWebDav.Server.Storage;
 
 namespace NWebDav.Server.Handlers
 {

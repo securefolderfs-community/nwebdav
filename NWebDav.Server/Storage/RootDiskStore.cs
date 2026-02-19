@@ -1,12 +1,9 @@
 using System;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using NWebDav.Server.Helpers;
-using NWebDav.Server.Http;
-using NWebDav.Server.Storage;
 
-namespace NWebDav.Server.Stores
+namespace NWebDav.Server.Storage
 {
     /// <summary>
     /// Wraps an <see cref="IStore"/>. Can be used to specify the root directory of the server.

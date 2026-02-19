@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using NWebDav.Server.Storage;
 
-namespace NWebDav.Server.Stores
+namespace NWebDav.Server.Storage
 {
     public interface IStore // TODO(wd): Replace with IStorageService
     {

@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using NWebDav.Server.Helpers;
 using NWebDav.Server.Locking;
 using NWebDav.Server.Props;
-using NWebDav.Server.Stores;
 using OwlCore.Storage;
 using SecureFolderFS.Shared.Extensions;
 using SecureFolderFS.Storage.Extensions;
@@ -173,49 +172,6 @@ namespace NWebDav.Server.Storage
                 return null;
 
             return new BackedDavFolder(parent, IsWritable, LockingManager);
-        }
-
-        /// <inheritdoc/>
-        public virtual async Task<StoreItemResult> CopyAsync(IDavFolder destination, string name, bool overwrite, CancellationToken cancellationToken)
-        {
-            try
-            {
-                // Create the item in the destination collection
-                IDavFile davFile;
-                try
-                {
-                    davFile = (IDavFile)await destination.CreateFileAsync(name, overwrite, cancellationToken).ConfigureAwait(false);
-                }
-                catch (HttpListenerException ex)
-                {
-                    return new StoreItemResult((HttpStatusCode)ex.ErrorCode);
-                }
-
-                // Copy the file content
-                try
-                {
-                    await using var sourceStream = await OpenStreamAsync(FileAccess.Read, cancellationToken).ConfigureAwait(false);
-                    await using var destinationStream = await davFile.OpenStreamAsync(FileAccess.Write, cancellationToken).ConfigureAwait(false);
-                    await sourceStream.CopyToAsync(destinationStream, cancellationToken).ConfigureAwait(false);
-                    await destinationStream.FlushAsync(cancellationToken).ConfigureAwait(false);
-                }
-                catch (IOException ioException) when (ioException.IsDiskFull())
-                {
-                    return new StoreItemResult(HttpStatusCode.InsufficientStorage, davFile);
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    return new StoreItemResult(HttpStatusCode.Forbidden, davFile);
-                }
-
-                // Return result
-                return new StoreItemResult(HttpStatusCode.Created, davFile);
-            }
-            catch (Exception)
-            {
-                // TODO(wd): Add logging
-                return new StoreItemResult(HttpStatusCode.InternalServerError);
-            }
         }
 
         /// <summary>

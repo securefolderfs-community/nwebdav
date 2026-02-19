@@ -4,10 +4,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
-using NWebDav.Server.Extensions;
 using NWebDav.Server.Helpers;
 using NWebDav.Server.Storage;
-using NWebDav.Server.Stores;
 using OwlCore.Storage;
 using SecureFolderFS.Storage.Extensions;
 
@@ -129,7 +127,7 @@ namespace NWebDav.Server.Handlers
             if (moveItem is IDavFolder moveCollection && !moveCollection.SupportsFastMove(destinationCollection, destinationName, overwrite))
             {
                 // Create a new collection
-                IDavFolder? newCollection = null;
+                IDavFolder? newCollection;
                 try
                 {
                     newCollection = (IDavFolder)await destinationCollection.CreateFolderAsync(destinationName, overwrite, cancellationToken).ConfigureAwait(false);
@@ -162,8 +160,22 @@ namespace NWebDav.Server.Handlers
             {
                 try
                 {
-                    // Items should be moved directly
-                    _ = await sourceCollection.MoveItemAsync(moveItem, destinationCollection, destinationName, overwrite, cancellationToken).ConfigureAwait(false);
+                    if (moveItem is IDavFile moveFile)
+                    {
+                        await destinationCollection
+                            .MoveFromAsync(moveFile, sourceCollection, overwrite, destinationName, cancellationToken)
+                            .ConfigureAwait(false);
+                    }
+                    else if (moveItem is IDavFolder moveFolder)
+                    {
+                        await destinationCollection
+                            .MoveFromAsync(moveFolder, sourceCollection, overwrite, destinationName, cancellationToken)
+                            .ConfigureAwait(false);
+                    }
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    errors.AddResult(subBaseUri, HttpStatusCode.Forbidden);
                 }
                 catch (HttpListenerException ex)
                 {

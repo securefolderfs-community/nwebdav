@@ -1,15 +1,15 @@
-﻿using Microsoft.Extensions.Logging;
-using NWebDav.Server.Extensions;
-using NWebDav.Server.Helpers;
-using NWebDav.Server.Locking;
-using NWebDav.Server.Stores;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Microsoft.Extensions.Logging;
+using NWebDav.Server.Extensions;
+using NWebDav.Server.Helpers;
+using NWebDav.Server.Locking;
+using NWebDav.Server.Storage;
 
 namespace NWebDav.Server.Handlers
 {
@@ -110,7 +110,7 @@ namespace NWebDav.Server.Handlers
                     // Determine the owner
                     var xOwner = xRoot.Elements(WebDavNamespaces.DavNs + "owner").Single();
                     // The content can be either an element or text
-                    owner = xOwner.Value == string.Empty ? xOwner.Elements().Single() : new XElement("owner", xOwner.Value); 
+                    owner = xOwner.Value == string.Empty ? xOwner.Elements().Single() : new XElement("owner", xOwner.Value);
                 }
                 catch (Exception)
                 {

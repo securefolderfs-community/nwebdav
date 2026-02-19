@@ -1,15 +1,14 @@
-﻿using Microsoft.Extensions.Logging;
-using NWebDav.Server.Extensions;
-using NWebDav.Server.Helpers;
-using NWebDav.Server.Props;
-using NWebDav.Server.Storage;
-using NWebDav.Server.Stores;
-using System;
+﻿using System;
 using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using NWebDav.Server.Extensions;
+using NWebDav.Server.Helpers;
+using NWebDav.Server.Props;
+using NWebDav.Server.Storage;
 
 namespace NWebDav.Server.Handlers
 {

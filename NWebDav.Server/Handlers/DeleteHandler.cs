@@ -4,10 +4,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
-using NWebDav.Server.Extensions;
 using NWebDav.Server.Helpers;
 using NWebDav.Server.Storage;
-using NWebDav.Server.Stores;
 using OwlCore.Storage;
 using SecureFolderFS.Storage.Extensions;
 

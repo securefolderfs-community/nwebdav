@@ -1,18 +1,16 @@
-﻿using Microsoft.Extensions.Logging;
-using NWebDav.Server.Enums;
-using NWebDav.Server.Helpers;
-using NWebDav.Server.Http;
-using NWebDav.Server.Props;
-using NWebDav.Server.Storage;
-using NWebDav.Server.Stores;
-using OwlCore.Storage;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Microsoft.Extensions.Logging;
+using NWebDav.Server.Enums;
+using NWebDav.Server.Helpers;
+using NWebDav.Server.Props;
+using NWebDav.Server.Storage;
+using OwlCore.Storage;
 
 namespace NWebDav.Server.Handlers
 {

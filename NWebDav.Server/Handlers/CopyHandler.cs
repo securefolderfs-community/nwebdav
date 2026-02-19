@@ -1,13 +1,13 @@
-﻿using Microsoft.Extensions.Logging;
-using NWebDav.Server.Helpers;
-using NWebDav.Server.Storage;
-using NWebDav.Server.Stores;
-using OwlCore.Storage;
-using System;
+﻿using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Microsoft.Extensions.Logging;
+using NWebDav.Server.Helpers;
+using NWebDav.Server.Storage;
+using OwlCore.Storage;
+using SecureFolderFS.Storage.Extensions;
 
 namespace NWebDav.Server.Handlers
 {
@@ -98,29 +98,24 @@ namespace NWebDav.Server.Handlers
             }
         }
 
-        private async Task CopyAsync(IDavStorable source, IDavFolder destinationCollection, string name, bool overwrite, int depth, CancellationToken cancellationToken, Uri baseUri, UriResultCollection errors)
+        private async Task CopyAsync(IDavStorable source, IDavFolder destinationCollection, string newName, bool overwrite, int depth, CancellationToken cancellationToken, Uri baseUri, UriResultCollection errors)
         {
-            // Determine the new base Uri
-            var newBaseUri = UriHelper.Combine(baseUri, name);
-
-            // Copy the item
-            var copyResult = await source.CopyAsync(destinationCollection, name, overwrite, cancellationToken).ConfigureAwait(false);
-            if (copyResult.Result != HttpStatusCode.Created && copyResult.Result != HttpStatusCode.NoContent)
+            try
             {
-                errors.AddResult(newBaseUri, copyResult.Result);
-                return;
+                _ = source switch
+                {
+                    IDavFile file => (IStorableChild)await destinationCollection.CreateCopyOfAsync(file, overwrite, newName, cancellationToken).ConfigureAwait(false),
+                    IDavFolder folder when depth > 0 => await destinationCollection.CreateCopyOfAsync(folder, overwrite, newName, cancellationToken).ConfigureAwait(false),
+                    _ => throw new NotSupportedException($"The source item type '{source.GetType().Name}' is not supported.")
+                };
             }
-
-            // Check if the source is a collection and we are requested to copy recursively
-            var sourceCollection = source as IDavFolder;
-            if (sourceCollection != null && depth > 0)
+            catch (FileAlreadyExistsException)
             {
-                // The result should also contain a collection
-                var newCollection = (IDavFolder)copyResult.Item;
-
-                // Copy all childs of the source collection
-                await foreach (var entry in sourceCollection.GetItemsAsync(StorableType.All, cancellationToken).ConfigureAwait(false))
-                    await CopyAsync((IDavStorable)entry, newCollection, entry.Name, overwrite, depth - 1, cancellationToken, newBaseUri, errors).ConfigureAwait(false);
+                errors.AddResult(baseUri, HttpStatusCode.Conflict);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                errors.AddResult(baseUri, HttpStatusCode.Forbidden);
             }
         }
     }

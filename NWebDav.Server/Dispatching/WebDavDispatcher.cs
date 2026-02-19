@@ -1,9 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
-using NWebDav.Server.Stores;
-using System;
+﻿using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using NWebDav.Server.Storage;
 
 namespace NWebDav.Server.Dispatching
 {

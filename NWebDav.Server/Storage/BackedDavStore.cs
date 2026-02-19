@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using NWebDav.Server.Locking;
-using NWebDav.Server.Stores;
 using OwlCore.Storage;
 
 namespace NWebDav.Server.Storage
