@@ -62,7 +62,7 @@ namespace NWebDav.Server.Storage
             },
             new DavGetContentLength<BackedDavFile>
             {
-                Getter = (context, item) => Math.Max(0, item.Inner.GetSizeAsync().GetAwaiter().GetResult())
+                Getter = (context, item) => Math.Max(0L, item.Inner.GetSizeAsync().GetAwaiter().GetResult() ?? 0L)
             },
             new DavGetContentType<BackedDavFile>
             {
