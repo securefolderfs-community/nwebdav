@@ -163,7 +163,7 @@ namespace NWebDav.Server.Handlers
                     if (moveItem is IDavFile moveFile)
                     {
                         await destinationCollection
-                            .MoveFromAsync(moveFile, sourceCollection, overwrite, destinationName, cancellationToken)
+                            .MoveFileImmediatelyFrom(moveFile, sourceCollection, overwrite, destinationName, cancellationToken)
                             .ConfigureAwait(false);
                     }
                     else if (moveItem is IDavFolder moveFolder)

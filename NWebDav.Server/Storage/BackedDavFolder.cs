@@ -285,7 +285,7 @@ namespace NWebDav.Server.Storage
                     || source is not IWrapper<IFolder> { Inner: IModifiableFolder innerSource })
                     return await fallback(this, fileToMove, source, overwrite, newName, cancellationToken).ConfigureAwait(false);
 
-                var movedFile = await innerMoveRenamedFrom.MoveFromAsync(innerFile, innerSource, overwrite, newName, cancellationToken).ConfigureAwait(false);
+                var movedFile = await innerMoveRenamedFrom.MoveFileImmediatelyFrom(innerFile, innerSource, overwrite, newName, cancellationToken).ConfigureAwait(false);
                 return NewFile(movedFile);
             }
             catch (NotSupportedException)
