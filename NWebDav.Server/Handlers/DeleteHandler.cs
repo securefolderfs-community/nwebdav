@@ -78,7 +78,7 @@ namespace NWebDav.Server.Handlers
             }
 
             // Delete item
-            var status = await DeleteItemAsync(parentCollection, splitUri.Name, splitUri.CollectionUri, cancellationToken).ConfigureAwait(false);
+            var status = await DeleteItemAsync(parentCollection, splitUri.Name, cancellationToken).ConfigureAwait(false);
             if (status == HttpStatusCode.OK && errors.HasItems)
             {
                 // Obtain the status document
@@ -94,21 +94,12 @@ namespace NWebDav.Server.Handlers
             }
         }
 
-        private async Task<HttpStatusCode> DeleteItemAsync(IDavFolder collection, string name, Uri baseUri, CancellationToken cancellationToken)
+        private async Task<HttpStatusCode> DeleteItemAsync(IDavFolder collection, string name, CancellationToken cancellationToken)
         {
-            // Obtain the actual item
             var deleteItem = (IDavStorable?)await collection.TryGetFirstByNameAsync(name, cancellationToken).ConfigureAwait(false);
-            if (deleteItem is IDavFolder deleteCollection)
-            {
-                // Determine the new base URI
-                var subBaseUri = UriHelper.Combine(baseUri, name);
+            if (deleteItem is null)
+                return HttpStatusCode.NotFound;
 
-                // Delete all entries first
-                await foreach (var entry in deleteCollection.GetItemsAsync(StorableType.All, cancellationToken).ConfigureAwait(false))
-                    await DeleteItemAsync(deleteCollection, ((IDavStorable)entry).Name, subBaseUri, cancellationToken).ConfigureAwait(false);
-            }
-
-            // Attempt to delete the item
             try
             {
                 await collection.DeleteAsync(deleteItem, cancellationToken).ConfigureAwait(false);
