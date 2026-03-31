@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/Files/">
+    <File Path="Directory.build.props" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="NWebDav.Server.HttpListener/NWebDav.Server.HttpListener.csproj" />
+  <Project Path="NWebDav.Server/NWebDav.Server.csproj" />
+</Solution>
