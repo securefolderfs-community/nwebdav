@@ -3,6 +3,8 @@
     <File Path="Directory.build.props" />
     <File Path="README.md" />
   </Folder>
-  <Project Path="NWebDav.Server.HttpListener/NWebDav.Server.HttpListener.csproj" />
-  <Project Path="NWebDav.Server/NWebDav.Server.csproj" />
+  <Folder Name="/src/">
+    <Project Path="src/NWebDav.Server.HttpListener/NWebDav.Server.HttpListener.csproj" />
+    <Project Path="src/NWebDav.Server/NWebDav.Server.csproj" />
+  </Folder>
 </Solution>
