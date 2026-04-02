@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net10.0</TargetFrameworks>
+    <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>NWebDav.Server.HttpListener</AssemblyName>
     <Title>NWebDav server library for HttpListener</Title>
     <OutputType>Library</OutputType>
