@@ -279,7 +279,8 @@ namespace NWebDav.Server.Locking
 
             public DateTime? Expires { get; private set; }
 
-            public bool IsExpired => !Expires.HasValue || Expires < DateTime.UtcNow;
+            // A lock without an expiration date/time (infinite timeout) never expires
+            public bool IsExpired => Expires.HasValue && Expires < DateTime.UtcNow;
 
             public ItemLockInfo(IDavStorable item, LockType lockType, LockScope lockScope, Uri lockRootUri, bool recursive, XElement owner, int timeout)
             {

@@ -88,8 +88,9 @@ namespace NWebDav.Server.Storage
         /// </summary>
         protected virtual string GetRelativePath(Uri uri)
         {
-            // Decode the URI path and remove leading slash
-            var path = Uri.UnescapeDataString(uri.LocalPath);
+            // Remove the leading slash (Uri.LocalPath is already percent-decoded,
+            // so decoding it again would corrupt names containing '%XX' sequences)
+            var path = uri.LocalPath;
             if (path.StartsWith("/"))
                 path = path.Substring(1);
 

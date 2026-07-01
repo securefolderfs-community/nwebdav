@@ -91,6 +91,10 @@ namespace NWebDav.Server.Handlers
                     // Set the response
                     response.SetStatus(HttpStatusCode.OK);
 
+                    // Range of the entry data to send (whole stream unless a valid range was requested)
+                    var copyStart = 0L;
+                    var copyEnd = default(long?);
+
                     // Set the expected content length
                     try
                     {
@@ -102,30 +106,56 @@ namespace NWebDav.Server.Handlers
                             response.SetHeaderValue("Accept-Ranges", "bytes");
 
                             // Determine the total length
-                            var length = stream.Length;
+                            var totalLength = stream.Length;
+                            var length = totalLength;
 
                             // Check if an 'If-Range' was specified
-                            if (range?.If != null && propertyManager != null)
+                            if (range?.If is not null && propertyManager != null)
                             {
                                 var lastModifiedText = (string)await propertyManager.GetPropertyAsync(context, entry, DavGetLastModified<IDavStorable>.PropertyName, true).ConfigureAwait(false);
                                 var lastModified = DateTime.Parse(lastModifiedText, CultureInfo.InvariantCulture);
-                                if (lastModified != range.If)
+                                if (lastModified != range.If.Value)
                                     range = null;
                             }
+
+                            // A range is only satisfiable for a non-empty entry
+                            if (range != null && totalLength <= 0)
+                                range = null;
 
                             // Check if a range was specified
                             if (range != null)
                             {
-                                var start = range.Start ?? 0;
-                                var end = Math.Min(range.End ?? long.MaxValue, length-1);
+                                long start, end;
+                                if (range.Start is null && range.End is not null)
+                                {
+                                    // Suffix range ('bytes=-N' denotes the last N bytes)
+                                    start = Math.Max(0, totalLength - range.End.Value);
+                                    end = totalLength - 1;
+                                }
+                                else
+                                {
+                                    start = range.Start ?? 0;
+                                    end = Math.Min(range.End ?? long.MaxValue, totalLength - 1);
+                                }
+
+                                // Requested range cannot be satisfied
+                                if (start >= totalLength || start > end)
+                                {
+                                    response.SetHeaderValue("Content-Range", $"bytes */{totalLength}");
+                                    response.SetHeaderValue("Content-Length", "0");
+                                    response.SetStatus(HttpStatusCode.RequestedRangeNotSatisfiable);
+                                    return;
+                                }
+
+                                copyStart = start;
+                                copyEnd = end;
                                 length = end - start + 1;
 
                                 // Write the range
-                                response.SetHeaderValue("Content-Range", $"bytes {start}-{end} / {stream.Length}");
+                                response.SetHeaderValue("Content-Range", $"bytes {start}-{end}/{totalLength}");
 
-                                // Set status to partial result if not all data can be sent
-                                if (length < stream.Length)
-                                    response.SetStatus(HttpStatusCode.PartialContent);
+                                // Serving a range is always a partial result
+                                response.SetStatus(HttpStatusCode.PartialContent);
                             }
 
                             // Set the header, so the client knows how much data is required
@@ -147,7 +177,7 @@ namespace NWebDav.Server.Handlers
 
                     // HEAD method doesn't require the actual item data
                     if (!head)
-                        await CopyToAsync(stream, response.OutputStream, range?.Start ?? 0, range?.End, cancellationToken).ConfigureAwait(false);
+                        await CopyToAsync(stream, response.OutputStream, copyStart, copyEnd, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
